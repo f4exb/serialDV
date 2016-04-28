@@ -14,63 +14,42 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.          //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SERIALDATACONTROLLER_H_
-#define SERIALDATACONTROLLER_H_
-
-#if defined(__WINDOWS__)
-#include <windows.h>
-#endif
-
-#include <string>
+#include "dvcontroller.h"
 
 namespace SerialDV
 {
 
-enum SERIAL_SPEED {
-	SERIAL_NONE   = 0,
-    SERIAL_1200   = 1200,
-    SERIAL_2400   = 2400,
-    SERIAL_4800   = 4800,
-    SERIAL_9600   = 9600,
-    SERIAL_19200  = 19200,
-    SERIAL_38400  = 38400,
-    SERIAL_76800  = 76800,
-    SERIAL_115200 = 115200,
-    SERIAL_230400 = 230400,
-    SERIAL_460800 = 460800
-};
+DVController::DVController(std::string& deviceName, bool halfSpeed)
+{
+	m_open = m_dvSerialController.open(deviceName, halfSpeed ? SERIAL_230400 : SERIAL_460800);
+}
 
-class SerialDataController {
-public:
-    SerialDataController();
-    ~SerialDataController();
+bool DVController::encode(short *audioFrame, unsigned char *mbeFrame)
+{
+	if (!m_open) {
+		return false;
+	}
 
-    bool open(const std::string& device, SERIAL_SPEED speed);
+	m_dvSerialController.encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE);
+	return m_dvSerialController.encodeOut(mbeFrame, VOICE_FRAME_LENGTH_BYTES);
+}
 
-    int  read(unsigned char* buffer, unsigned int length);
-    int  write(const unsigned char* buffer, unsigned int length);
 
-    void close();
+bool DVController::decode(short *audioFrame, unsigned char *mbeFrame)
+{
+	if (!m_open) {
+		return false;
+	}
 
-private:
-    std::string    m_device;
-    SERIAL_SPEED   m_speed;
-#if defined(__WINDOWS__)
-    HANDLE         m_handle;
-    OVERLAPPED     m_readOverlapped;
-    OVERLAPPED     m_writeOverlapped;
-    unsigned char* m_readBuffer;
-    unsigned int   m_readLength;
-    bool           m_readPending;
-#else
-    int            m_fd;
-#endif
+	m_dvSerialController.decodeIn(mbeFrame, VOICE_FRAME_LENGTH_BYTES);
+	return m_dvSerialController.decodeOut(audioFrame, MBE_AUDIO_BLOCK_SIZE);
+}
 
-#if defined(__WINDOWS__)
-    int readNonblock(unsigned char* buffer, unsigned int length);
-#endif
-};
+DVController::~DVController()
+{
+	m_dvSerialController.close();
+	m_open = false;
+}
 
 } // namespace SerialDV
 
-#endif /* SERIALDATACONTROLLER_H_ */

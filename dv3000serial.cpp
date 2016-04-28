@@ -25,41 +25,7 @@
 namespace SerialDV
 {
 
-const unsigned char DV3000SerialController::DV3000_START_BYTE   = 0x61U;
-
-const unsigned char DV3000SerialController::DV3000_TYPE_CONTROL = 0x00U;
-const unsigned char DV3000SerialController::DV3000_TYPE_AMBE    = 0x01U;
-const unsigned char DV3000SerialController::DV3000_TYPE_AUDIO   = 0x02U;
-
-const unsigned char DV3000SerialController::DV3000_CONTROL_RATEP  = 0x0AU;
-const unsigned char DV3000SerialController::DV3000_CONTROL_PRODID = 0x30U;
-const unsigned char DV3000SerialController::DV3000_CONTROL_READY  = 0x39U;
-
-const unsigned char DV3000SerialController::DV3000_REQ_PRODID[] = {DV3000_START_BYTE, 0x00U, 0x01U, DV3000_TYPE_CONTROL, DV3000_CONTROL_PRODID};
-const unsigned int DV3000SerialController::DV3000_REQ_PRODID_LEN = 5U;
-
-const unsigned char DV3000SerialController::DV3000_REQ_RATEP[] = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x01U, 0x30U, 0x07U, 0x63U, 0x40U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x48U};
-const unsigned int DV3000SerialController::DV3000_REQ_RATEP_LEN = 17U;
-
-const unsigned char DV3000SerialController::DV3000_AUDIO_HEADER[] = {DV3000_START_BYTE, 0x01U, 0x42U, DV3000_TYPE_AUDIO, 0x00U, 0xA0U};
-const unsigned char DV3000SerialController::DV3000_AUDIO_HEADER_LEN = 6U;
-
-const unsigned char DV3000SerialController::DV3000_AMBE_HEADER[] = {DV3000_START_BYTE, 0x00U, 0x0BU, DV3000_TYPE_AMBE, 0x01U, 0x48U};
-const unsigned char DV3000SerialController::DV3000_AMBE_HEADER_LEN  = 6U;
-
-const unsigned int DV3000SerialController::DV3000_HEADER_LEN = 4U;
-
-const unsigned int DV3000SerialController::BUFFER_LENGTH = 400U;
-
-const unsigned int DV3000SerialController::MBE_AUDIO_BLOCK_SIZE  = 160U;
-const unsigned int DV3000SerialController::MBE_AUDIO_BLOCK_BYTES = MBE_AUDIO_BLOCK_SIZE * 2U;
-
-const unsigned int DV3000SerialController::VOICE_FRAME_LENGTH_BITS = 72U;
-const unsigned int DV3000SerialController::VOICE_FRAME_LENGTH_BYTES = VOICE_FRAME_LENGTH_BITS / 8U;
-
-DV3000SerialController::DV3000SerialController(const std::string& device,
-        SERIAL_SPEED speed) :
-        m_serial(device, speed)
+DV3000SerialController::DV3000SerialController()
 {
 }
 
@@ -67,11 +33,13 @@ DV3000SerialController::~DV3000SerialController()
 {
 }
 
-bool DV3000SerialController::open()
+bool DV3000SerialController::open(const std::string& device, SERIAL_SPEED speed)
 {
-    bool res = m_serial.open();
-    if (!res)
+    bool res = m_serial.open(device, speed);
+
+    if (!res) {
         return false;
+    }
 
     m_serial.write(DV3000_REQ_PRODID, DV3000_REQ_PRODID_LEN);
 
@@ -91,7 +59,7 @@ bool DV3000SerialController::open()
         if (type == RESP_NAME)
         {
             std::string name((char *) &buffer[5]);
-            fprintf(stderr, "DV3000 chip identified as: %s", name.c_str());
+            fprintf(stderr, "DV3000SerialController::open: DV3000 chip identified as: %s", name.c_str());
             found = true;
             break;
         }
@@ -124,7 +92,7 @@ bool DV3000SerialController::open()
         usleep(10UL);
     }
 
-    fprintf(stderr, "Timeout");
+    fprintf(stderr, "DV3000SerialController::open: Timeout");
     return false;
 }
 
@@ -133,6 +101,7 @@ void DV3000SerialController::encodeIn(const short* audio, unsigned int length)
     assert(audio != 0);
     assert(length == MBE_AUDIO_BLOCK_SIZE);
 
+    // TODO: optimization with fixed initialization of the audio header
     unsigned char buffer[DV3000_AUDIO_HEADER_LEN + MBE_AUDIO_BLOCK_BYTES];
 
     ::memcpy(buffer, DV3000_AUDIO_HEADER, DV3000_AUDIO_HEADER_LEN);
@@ -259,7 +228,7 @@ DV3000SerialController::RESP_TYPE DV3000SerialController::getResponse(unsigned c
 
         if (!found)
         {
-            fprintf(stderr, "Unknown bytes from the DV3000, %02X %02X %02X", buffer[0U], buffer[1U], buffer[2U]);
+            fprintf(stderr, "DV3000SerialController::getResponse: Unknown bytes from the DV3000, %02X %02X %02X", buffer[0U], buffer[1U], buffer[2U]);
             return RESP_UNKNOWN;
         }
     }
@@ -277,7 +246,7 @@ DV3000SerialController::RESP_TYPE DV3000SerialController::getResponse(unsigned c
 
         if (len2 != 2)
         {
-            fprintf(stderr, "Invalid DV3000 data read, %d != 2", len2);
+            fprintf(stderr, "DV3000SerialController::getResponse: Invalid DV3000 data read, %d != 2", len2);
             return RESP_ERROR;
         }
     }
@@ -296,7 +265,7 @@ DV3000SerialController::RESP_TYPE DV3000SerialController::getResponse(unsigned c
 
     if (len3 != int(respLen - offset))
     {
-        fprintf(stderr, "Invalid DV3000 data, %d != %u", len3, respLen - offset);
+        fprintf(stderr, "DV3000SerialController::getResponse: Invalid DV3000 data, %d != %u", len3, respLen - offset);
         return RESP_ERROR;
     }
 

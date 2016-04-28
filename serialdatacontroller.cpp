@@ -294,32 +294,35 @@ void SerialDataController::close()
 
 #else
 
-SerialDataController::SerialDataController(const std::string& device,
-        SERIAL_SPEED speed) :
-        m_device(device), m_speed(speed), m_fd(-1)
+SerialDataController::SerialDataController() :
+		m_fd(-1),
+		m_speed(SERIAL_NONE)
 {
-    assert(!device.empty());
 }
 
 SerialDataController::~SerialDataController()
 {
 }
 
-bool SerialDataController::open()
+bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
 {
     assert(m_fd == -1);
+    assert(!device.empty());
+
+    m_device = device;
+    m_speed = speed;
 
     m_fd = ::open(m_device.c_str(), O_RDWR | O_NOCTTY | O_NDELAY, 0);
 
     if (m_fd < 0)
     {
-        fprintf(stderr, "Cannot open device - %s", m_device.c_str());
+        fprintf(stderr, "SerialDataController::open: Cannot open device - %s", m_device.c_str());
         return false;
     }
 
     if (::isatty(m_fd) == 0)
     {
-        fprintf(stderr, "%s is not a TTY device", m_device.c_str());
+        fprintf(stderr, "SerialDataController::open: %s is not a TTY device", m_device.c_str());
         ::close(m_fd);
         return false;
     }
@@ -328,7 +331,7 @@ bool SerialDataController::open()
 
     if (::tcgetattr(m_fd, &termios) < 0)
     {
-        fprintf(stderr, "Cannot get the attributes for %s", m_device.c_str());
+        fprintf(stderr, "SerialDataController::open: Cannot get the attributes for %s", m_device.c_str());
         ::close(m_fd);
         return false;
     }
@@ -381,14 +384,14 @@ bool SerialDataController::open()
         ::cfsetispeed(&termios, B460800);
         break;
     default:
-        fprintf(stderr, "Unsupported serial port speed - %d", int(m_speed));
+        fprintf(stderr, "SerialDataController::open: Unsupported serial port speed - %d", int(m_speed));
         ::close(m_fd);
         return false;
     }
 
     if (::tcsetattr(m_fd, TCSANOW, &termios) < 0)
     {
-        fprintf(stderr, "Cannot set the attributes for %s", m_device.c_str());
+        fprintf(stderr, "SerialDataController::open: Cannot set the attributes for %s", m_device.c_str());
         ::close(m_fd);
         return false;
     }
@@ -434,7 +437,7 @@ int SerialDataController::read(unsigned char* buffer, unsigned int length)
 
         if (n < 0)
         {
-            fprintf(stderr, "Error from select(), errno=%d", errno);
+            fprintf(stderr, "SerialDataController::read: Error from select(), errno=%d", errno);
             return -1;
         }
 
@@ -446,7 +449,7 @@ int SerialDataController::read(unsigned char* buffer, unsigned int length)
             {
                 if (errno != EAGAIN)
                 {
-                    fprintf(stderr, "Error from read(), errno=%d", errno);
+                    fprintf(stderr, "SerialDataController::read: Error from read(), errno=%d", errno);
                     return -1;
                 }
             }
@@ -478,7 +481,7 @@ int SerialDataController::write(const unsigned char* buffer, unsigned int length
         {
             if (errno != EAGAIN)
             {
-                fprintf(stderr, "Error returned from write(), errno=%d", errno);
+                fprintf(stderr, "SerialDataController::write: Error returned from write(), errno=%d", errno);
                 return -1;
             }
         }
@@ -497,6 +500,8 @@ void SerialDataController::close()
 
     ::close (m_fd);
 
+    m_device.clear();
+    m_speed = SERIAL_NONE;
     m_fd = -1;
 }
 

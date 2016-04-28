@@ -18,11 +18,13 @@ project(serialdv)
 set(serialdv_SOURCES
   serialdatacontroller.cpp
   dv3000serial.cpp
+  dvcontroller.cpp
 )
 
 set(serialdv_HEADERS
   serialdatacontroller.h
   dv3000serial.h
+  dvcontroller.h
 )
 
 include_directories(
