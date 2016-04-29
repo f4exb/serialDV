@@ -396,6 +396,8 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
         return false;
     }
 
+    fprintf(stderr, "SerialDataController::open: opened %s at speed %d\n",  m_device.c_str(), int(m_speed));
+
     return true;
 }
 
