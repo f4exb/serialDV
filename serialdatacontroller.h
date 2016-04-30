@@ -26,6 +26,38 @@
 namespace SerialDV
 {
 
+const unsigned char DV3000_START_BYTE   = 0x61U;
+
+const unsigned char DV3000_TYPE_CONTROL = 0x00U;
+const unsigned char DV3000_TYPE_AMBE    = 0x01U;
+const unsigned char DV3000_TYPE_AUDIO   = 0x02U;
+
+const unsigned char DV3000_CONTROL_RATEP  = 0x0AU;
+const unsigned char DV3000_CONTROL_PRODID = 0x30U;
+const unsigned char DV3000_CONTROL_READY  = 0x39U;
+
+const unsigned char DV3000_REQ_PRODID[] = {DV3000_START_BYTE, 0x00U, 0x01U, DV3000_TYPE_CONTROL, DV3000_CONTROL_PRODID};
+const unsigned int DV3000_REQ_PRODID_LEN = 5U;
+
+const unsigned char DV3000_REQ_RATEP[] = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x01U, 0x30U, 0x07U, 0x63U, 0x40U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x48U};
+const unsigned int DV3000_REQ_RATEP_LEN = 17U;
+
+const unsigned char DV3000_AUDIO_HEADER[] = {DV3000_START_BYTE, 0x01U, 0x42U, DV3000_TYPE_AUDIO, 0x00U, 0xA0U};
+const unsigned char DV3000_AUDIO_HEADER_LEN = 6U;
+
+const unsigned char DV3000_AMBE_HEADER[] = {DV3000_START_BYTE, 0x00U, 0x0BU, DV3000_TYPE_AMBE, 0x01U, 0x48U};
+const unsigned char DV3000_AMBE_HEADER_LEN  = 6U;
+
+const unsigned int DV3000_HEADER_LEN = 4U;
+
+const unsigned int BUFFER_LENGTH = 400U;
+
+const unsigned int MBE_AUDIO_BLOCK_SIZE  = 160U;
+const unsigned int MBE_AUDIO_BLOCK_BYTES = MBE_AUDIO_BLOCK_SIZE * 2U;
+
+const unsigned int VOICE_FRAME_LENGTH_BITS = 72U;
+const unsigned int VOICE_FRAME_LENGTH_BYTES = VOICE_FRAME_LENGTH_BITS / 8U;
+
 enum SERIAL_SPEED {
 	SERIAL_NONE   = 0,
     SERIAL_1200   = 1200,

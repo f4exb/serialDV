@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include "dv3000serial.h"
+#include "serialdatacontroller.h"
 
 namespace SerialDV
 {
@@ -27,10 +27,12 @@ namespace SerialDV
 class DVController
 {
 public:
-	DVController(std::string& deviceName, bool halfSpeed=false);
+	DVController();
 	~DVController();
 
-	bool isOpen() const { return m_open; }
+    bool open(const std::string& device, bool halfSpeed=false);
+    void close();
+    bool isOpen() const { return m_open; }
 
 	/** Encoding process of one audio frame to one AMBE frame
 	 * Buffers are supposed to be allocated with the correct size. That is
@@ -55,8 +57,27 @@ public:
 	bool decode(short *audioFrame, unsigned char *mbeFrame);
 
 private:
-	bool m_open; //!< True if the serial DV device has been correctly opened
-	DV3000SerialController m_dvSerialController;
+
+    enum RESP_TYPE {
+        RESP_NONE,
+        RESP_ERROR,
+        RESP_RATEP,
+        RESP_NAME,
+        RESP_AMBE,
+        RESP_AUDIO,
+        RESP_UNKNOWN
+    };
+
+    SerialDataController m_serial;
+    bool m_open; //!< True if the serial DV device has been correctly opened
+
+    void encodeIn(const short* audio, unsigned int length);
+    bool encodeOut(unsigned char* ambe, unsigned int length);
+
+    void decodeIn(const unsigned char* ambe, unsigned int length);
+    bool decodeOut(short* audio, unsigned int length);
+
+    RESP_TYPE getResponse(unsigned char* buffer, unsigned int length);
 };
 
 } // namespace SerialDV
