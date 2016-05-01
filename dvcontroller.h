@@ -50,7 +50,7 @@ public:
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BYTES constant is the number of bytes (9)
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BITS constant is the number of bits (72)
 	 */
-	bool encode(short *audioFrame, unsigned char *mbeFrame, DVRate rate);
+	bool encode(const short *audioFrame, unsigned char *mbeFrame, DVRate rate);
 
 	/** Encoding process of one AMBE frame to one audio frame
 	 * Buffers are supposed to be allocated with the correct size. That is
@@ -61,7 +61,7 @@ public:
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BYTES constant is the number of bytes (9)
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BITS constant is the number of bits (72)
 	 */
-	bool decode(short *audioFrame, unsigned char *mbeFrame, DVRate rate);
+	bool decode(short *audioFrame, const unsigned char *mbeFrame, DVRate rate);
 
 private:
 

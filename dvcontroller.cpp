@@ -86,7 +86,7 @@ void DVController::close()
     m_open = false;
 }
 
-bool DVController::encode(short *audioFrame, unsigned char *mbeFrame, DVRate rate)
+bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRate rate)
 {
 	if (!m_open) {
 		return false;
@@ -103,7 +103,7 @@ bool DVController::encode(short *audioFrame, unsigned char *mbeFrame, DVRate rat
 }
 
 
-bool DVController::decode(short *audioFrame, unsigned char *mbeFrame, DVRate rate)
+bool DVController::decode(short *audioFrame, const unsigned char *mbeFrame, DVRate rate)
 {
 	if (!m_open) {
 		return false;
