@@ -24,6 +24,13 @@
 namespace SerialDV
 {
 
+typedef enum
+{
+    DVRateNone,
+    DVRate3600x2400, //!< D-Star
+    DVRate3600x2450  //!< DMR and the likes
+} DVRate;
+
 class DVController
 {
 public:
@@ -43,7 +50,7 @@ public:
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BYTES constant is the number of bytes (9)
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BITS constant is the number of bits (72)
 	 */
-	bool encode(short *audioFrame, unsigned char *mbeFrame);
+	bool encode(short *audioFrame, unsigned char *mbeFrame, DVRate rate);
 
 	/** Encoding process of one AMBE frame to one audio frame
 	 * Buffers are supposed to be allocated with the correct size. That is
@@ -54,7 +61,7 @@ public:
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BYTES constant is the number of bytes (9)
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BITS constant is the number of bits (72)
 	 */
-	bool decode(short *audioFrame, unsigned char *mbeFrame);
+	bool decode(short *audioFrame, unsigned char *mbeFrame, DVRate rate);
 
 private:
 
@@ -70,12 +77,15 @@ private:
 
     SerialDataController m_serial;
     bool m_open; //!< True if the serial DV device has been correctly opened
+    DVRate m_currentRate;
 
     void encodeIn(const short* audio, unsigned int length);
     bool encodeOut(unsigned char* ambe, unsigned int length);
 
     void decodeIn(const unsigned char* ambe, unsigned int length);
     bool decodeOut(short* audio, unsigned int length);
+
+    bool setRate(DVRate rate);
 
     RESP_TYPE getResponse(unsigned char* buffer, unsigned int length);
 };

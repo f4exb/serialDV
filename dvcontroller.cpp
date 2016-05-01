@@ -26,7 +26,8 @@ namespace SerialDV
 {
 
 DVController::DVController() :
-        m_open(false)
+        m_open(false),
+        m_currentRate(DVRateNone)
 {
 }
 
@@ -62,6 +63,7 @@ bool DVController::open(const std::string& device, bool halfSpeed)
             std::string name((char *) &buffer[5]);
             fprintf(stderr, "DVController::open: DV3000 chip identified as: %s\n", name.c_str());
             found = true;
+            m_open = true;
             break;
         }
 
@@ -74,34 +76,26 @@ bool DVController::open(const std::string& device, bool halfSpeed)
         return false;
     }
 
-    m_serial.write(DV3000_REQ_RATEP, DV3000_REQ_RATEP_LEN);
-
-    for (int i = 0; i < 50000; i++)
-    {
-        unsigned char buffer[BUFFER_LENGTH];
-        RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
-
-        if (type == RESP_ERROR)
-        {
-            m_serial.close();
-            return false;
-        }
-
-        if (type == RESP_RATEP) {
-            return true;
-        }
-
-        usleep(10UL);
-    }
-
     fprintf(stderr, "DVController::open: Timeout\n");
     return false;
 }
 
-bool DVController::encode(short *audioFrame, unsigned char *mbeFrame)
+void DVController::close()
+{
+    m_serial.close();
+    m_open = false;
+}
+
+bool DVController::encode(short *audioFrame, unsigned char *mbeFrame, DVRate rate)
 {
 	if (!m_open) {
 		return false;
+	}
+
+	if (rate != m_currentRate)
+	{
+	    setRate(rate);
+	    m_currentRate = rate;
 	}
 
 	encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE);
@@ -109,11 +103,17 @@ bool DVController::encode(short *audioFrame, unsigned char *mbeFrame)
 }
 
 
-bool DVController::decode(short *audioFrame, unsigned char *mbeFrame)
+bool DVController::decode(short *audioFrame, unsigned char *mbeFrame, DVRate rate)
 {
 	if (!m_open) {
 		return false;
 	}
+
+    if (rate != m_currentRate)
+    {
+        setRate(rate);
+        m_currentRate = rate;
+    }
 
 	decodeIn(mbeFrame, VOICE_FRAME_LENGTH_BYTES);
 	return decodeOut(audioFrame, MBE_AUDIO_BLOCK_SIZE);
@@ -192,9 +192,56 @@ bool DVController::decodeOut(short* audio, unsigned int length)
     return true;
 }
 
-void DVController::close()
+bool DVController::setRate(DVRate rate)
 {
-    m_serial.close();
+    if (!m_open) {
+        return false;
+    }
+
+    if (rate == DVRateNone) {
+        return true;
+    }
+
+    const unsigned char *ratepStr;
+
+    switch(rate)
+    {
+    case DVRateNone:
+        return true;
+    case DVRate3600x2400:
+        ratepStr = DV3000_REQ_3600X2400_RATEP;
+        break;
+    case DVRate3600x2450:
+        ratepStr = DV3000_REQ_3600X2450_RATEP;
+        break;
+    default:
+        return true;
+    }
+
+    m_serial.write(ratepStr, DV3000_REQ_RATEP_LEN);
+
+    for (int i = 0; i < 100U; i++)
+    {
+        unsigned char buffer[BUFFER_LENGTH];
+        RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
+
+        if (type == RESP_ERROR)
+        {
+            fprintf(stderr, "DVController::setRate: serial device error\n");
+            m_serial.close();
+            return false;
+        }
+
+        if (type == RESP_RATEP) {
+            fprintf(stderr, "DVController::setRate: OK\n");
+            return true;
+        }
+
+        usleep(10UL);
+    }
+
+    fprintf(stderr, "DVController::setRate: Timeout\n");
+    return false;
 }
 
 DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigned int length)
