@@ -37,6 +37,7 @@ DVController::~DVController()
 
 bool DVController::open(const std::string& device, bool halfSpeed)
 {
+    m_open = false;
     bool res = m_serial.open(device, halfSpeed ? SERIAL_230400 : SERIAL_460800);
 
     if (!res) {
@@ -45,39 +46,28 @@ bool DVController::open(const std::string& device, bool halfSpeed)
 
     m_serial.write(DV3000_REQ_PRODID, DV3000_REQ_PRODID_LEN);
 
-    bool found = false;
+    unsigned char buffer[BUFFER_LENGTH];
+    RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
 
-    for (unsigned int i = 0U; i < 10U; i++)
+    if (type == RESP_ERROR)
     {
-        unsigned char buffer[BUFFER_LENGTH];
-        RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
-
-        if (type == RESP_ERROR)
-        {
-            m_serial.close();
-            return false;
-        }
-
-        if (type == RESP_NAME)
-        {
-            std::string name((char *) &buffer[5]);
-            fprintf(stderr, "DVController::open: DV3000 chip identified as: %s\n", name.c_str());
-            found = true;
-            m_open = true;
-            break;
-        }
-
-        usleep(10UL);
-    }
-
-    if (!found)
-    {
+        fprintf(stderr, "DVController::open: serial device error\n");
         m_serial.close();
         return false;
     }
-
-    fprintf(stderr, "DVController::open: Timeout\n");
-    return false;
+    else if (type == RESP_NAME)
+    {
+        std::string name((char *) &buffer[5]);
+        fprintf(stderr, "DVController::open: DV3000 chip identified as: %s\n", name.c_str());
+        m_open = true;
+        return true;
+    }
+    else
+    {
+        fprintf(stderr, "DVController::open: response mismatch\n");
+        m_serial.close();
+        return false;
+    }
 }
 
 void DVController::close()
@@ -148,7 +138,9 @@ bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
     unsigned char buffer[BUFFER_LENGTH];
     RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
 
-    if (type != RESP_AMBE) {
+    if (type != RESP_AMBE)
+    {
+        fprintf(stderr, "DVController::encodeOut: error\n");
         return false;
     }
 
@@ -177,7 +169,9 @@ bool DVController::decodeOut(short* audio, unsigned int length)
     unsigned char buffer[BUFFER_LENGTH];
     RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
 
-    if (type != RESP_AUDIO) {
+    if (type != RESP_AUDIO)
+    {
+        fprintf(stderr, "DVController::decodeOut: error\n");
         return false;
     }
 
@@ -220,28 +214,26 @@ bool DVController::setRate(DVRate rate)
 
     m_serial.write(ratepStr, DV3000_REQ_RATEP_LEN);
 
-    for (int i = 0; i < 100U; i++)
+    unsigned char buffer[BUFFER_LENGTH];
+    RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
+
+    if (type == RESP_ERROR)
     {
-        unsigned char buffer[BUFFER_LENGTH];
-        RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
-
-        if (type == RESP_ERROR)
-        {
-            fprintf(stderr, "DVController::setRate: serial device error\n");
-            m_serial.close();
-            return false;
-        }
-
-        if (type == RESP_RATEP) {
-            fprintf(stderr, "DVController::setRate: OK\n");
-            return true;
-        }
-
-        usleep(10UL);
+        fprintf(stderr, "DVController::setRate: serial device error\n");
+        m_serial.close();
+        return false;
+    }
+    else if (type == RESP_RATEP)
+    {
+        fprintf(stderr, "DVController::setRate (%d): OK\n", (int) rate);
+        return true;
+    }
+    else
+    {
+        fprintf(stderr, "DVController::setRate: response mismatch\n");
+        return false;
     }
 
-    fprintf(stderr, "DVController::setRate: Timeout\n");
-    return false;
 }
 
 DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigned int length)
@@ -249,115 +241,121 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
     assert(buffer != 0);
     assert(length >= BUFFER_LENGTH);
 
-    int len1 = m_serial.read(buffer, 1U);
+    bool found = false;
+    int packetLength, offset;
+    unsigned char packetType;
 
-    if (len1 == 0) {
-        return RESP_NONE;
+    for (int i = 0; i < 1000; i++)
+    {
+        int len1 = m_serial.read(buffer, 1U);
+
+        if (len1 < 0)
+        {
+            fprintf(stderr, "DVController::getResponse: Error (start byte)\n");
+            return RESP_ERROR;
+        }
+        else if ((len1 == 1) && (buffer[0U] == DV3000_START_BYTE))
+        {
+            found = true;
+            break;
+        }
+
+        usleep(100UL);
     }
 
-    if (len1 < 0) {
+    if (!found)
+    {
+        fprintf(stderr, "DVController::getResponse: Timeout (start byte)\n");
         return RESP_ERROR;
     }
 
-    unsigned int offset = 3U;   // The normal case
+    packetLength = 3;
+    offset = 0;
+    found = false;
 
-    if (buffer[0U] != DV3000_START_BYTE)
+    for (int i = 0; i < 1000; i++)
     {
-        int len2 = m_serial.read(buffer + 1U, 2U);
+        int len1 = m_serial.read(&buffer[1 + offset], packetLength - offset);
 
-        if (len2 == 0) {
-            return RESP_NONE;
-        }
-
-        if (len2 < 0) {
+        if (len1 < 0)
+        {
+            fprintf(stderr, "DVController::getResponse: Error (packet header at %d)\n", offset);
             return RESP_ERROR;
         }
-
-        bool found = false;
-
-        for (unsigned int i = 1U; i < 4U && !found; i++)
+        else if (offset + len1 == packetLength)
         {
-            int ret1 = ::memcmp(buffer, DV3000_AUDIO_HEADER + i, 3U);
-            int ret2 = ::memcmp(buffer, DV3000_AMBE_HEADER + i, 3U);
-
-            if (ret1 == 0)
-            {
-                ::memcpy(buffer + i, buffer + 0U, 3U);
-                ::memcpy(buffer, DV3000_AUDIO_HEADER, i);
-                offset = i + 3U;
-                found = true;
-            }
-            else if (ret2 == 0)
-            {
-                ::memcpy(buffer + i, buffer + 0U, 3U);
-                ::memcpy(buffer, DV3000_AMBE_HEADER, i);
-                offset = i + 3U;
-                found = true;
-            }
+            found = true;
+            break;
+        }
+        else
+        {
+            offset += len1;
         }
 
-        if (!found)
-        {
-            fprintf(stderr, "DVController::getResponse: Unknown bytes from the DV3000, %02X %02X %02X", buffer[0U], buffer[1U], buffer[2U]);
-            return RESP_UNKNOWN;
-        }
+        usleep(100UL);
     }
-    else
+
+    if (!found)
     {
-        int len2 = m_serial.read(buffer + 1U, 2U);
-
-        if (len2 == 0) {
-            return RESP_NONE;
-        }
-
-        if (len2 < 0) {
-            return RESP_ERROR;
-        }
-
-        if (len2 != 2)
-        {
-            fprintf(stderr, "DVController::getResponse: Invalid DV3000 data read, %d != 2", len2);
-            return RESP_ERROR;
-        }
-    }
-
-    unsigned int respLen = (buffer[1U] & 0x0FU) * 256U + buffer[2U] + DV3000_HEADER_LEN;
-
-    int len3 = m_serial.read(buffer + offset, respLen - offset);
-
-    if (len3 == 0) {
-        return RESP_NONE;
-    }
-
-    if (len3 < 0) {
+        fprintf(stderr, "DVController::getResponse: Timeout (packet header)\n");
         return RESP_ERROR;
     }
 
-    if (len3 != int(respLen - offset))
+    packetLength = buffer[1] * 256 + buffer[2];
+    packetType = buffer[3];
+    offset = 0;
+    found = false;
+
+    for (int i = 0; i < 1000; i++)
     {
-        fprintf(stderr, "DVController::getResponse: Invalid DV3000 data, %d != %u", len3, respLen - offset);
+        int len1 = m_serial.read(&buffer[4 + offset], packetLength - offset);
+
+        if (len1 < 0)
+        {
+            fprintf(stderr, "DVController::getResponse: Error (packet payload at %d)\n", offset);
+            return RESP_ERROR;
+        }
+        else if (offset + len1 == packetLength)
+        {
+            found = true;
+            break;
+        }
+        else
+        {
+            offset += len1;
+        }
+
+        usleep(100UL);
+    }
+
+    if (!found) {
+        fprintf(stderr, "DVController::getResponse: Timeout (packet payload)\n");
         return RESP_ERROR;
     }
 
-    if (buffer[3U] == DV3000_TYPE_AUDIO)
+    //fprintf(stderr, "DVController::getResponse: packet type %02x\n", packetType);
+
+    if (packetType == DV3000_TYPE_AUDIO)
     {
         return RESP_AUDIO;
     }
-    else if (buffer[3U] == DV3000_TYPE_AMBE)
+    else if (packetType == DV3000_TYPE_AMBE)
     {
         return RESP_AMBE;
     }
-    else if (buffer[3U] == DV3000_TYPE_CONTROL)
+    else if (packetType == DV3000_TYPE_CONTROL) // check the field type buffer[4]
     {
-        if (buffer[4U] == DV3000_CONTROL_PRODID)
+        //fprintf(stderr, "DVController::getResponse: field type %02x\n", buffer[4]);
+
+        if (buffer[4] == DV3000_CONTROL_PRODID)
         {
             return RESP_NAME;
         }
-        else if (buffer[4U] == DV3000_CONTROL_RATEP)
+        else if (buffer[4] == DV3000_CONTROL_RATEP)
         {
             return RESP_RATEP;
         }
-        else if (buffer[4U] == DV3000_CONTROL_READY)
+        else if (buffer[4] == DV3000_CONTROL_READY)
         {
             return RESP_UNKNOWN;
         }
