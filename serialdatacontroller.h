@@ -56,8 +56,8 @@ const unsigned int BUFFER_LENGTH = 400U;
 const unsigned int MBE_AUDIO_BLOCK_SIZE  = 160U;
 const unsigned int MBE_AUDIO_BLOCK_BYTES = MBE_AUDIO_BLOCK_SIZE * 2U;
 
-const unsigned int VOICE_FRAME_LENGTH_BITS = 72U;
-const unsigned int VOICE_FRAME_LENGTH_BYTES = VOICE_FRAME_LENGTH_BITS / 8U;
+const unsigned int MBE_FRAME_LENGTH_BITS = 72U;
+const unsigned int MBE_FRAME_LENGTH_BYTES = MBE_FRAME_LENGTH_BITS / 8U;
 
 enum SERIAL_SPEED {
 	SERIAL_NONE   = 0,

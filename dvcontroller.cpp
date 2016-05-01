@@ -89,7 +89,7 @@ bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRa
 	}
 
 	encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE);
-	return encodeOut(mbeFrame, VOICE_FRAME_LENGTH_BYTES);
+	return encodeOut(mbeFrame, MBE_FRAME_LENGTH_BYTES);
 }
 
 
@@ -105,7 +105,7 @@ bool DVController::decode(short *audioFrame, const unsigned char *mbeFrame, DVRa
         m_currentRate = rate;
     }
 
-	decodeIn(mbeFrame, VOICE_FRAME_LENGTH_BYTES);
+	decodeIn(mbeFrame, MBE_FRAME_LENGTH_BYTES);
 	return decodeOut(audioFrame, MBE_AUDIO_BLOCK_SIZE);
 }
 
@@ -133,7 +133,7 @@ void DVController::encodeIn(const short* audio, unsigned int length)
 bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
 {
     assert(ambe != 0);
-    assert(length == VOICE_FRAME_LENGTH_BYTES);
+    assert(length == MBE_FRAME_LENGTH_BYTES);
 
     unsigned char buffer[BUFFER_LENGTH];
     RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
@@ -144,7 +144,7 @@ bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
         return false;
     }
 
-    ::memcpy(ambe, buffer + DV3000_AMBE_HEADER_LEN, VOICE_FRAME_LENGTH_BYTES);
+    ::memcpy(ambe, buffer + DV3000_AMBE_HEADER_LEN, MBE_FRAME_LENGTH_BYTES);
 
     return true;
 }
@@ -152,13 +152,13 @@ bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
 void DVController::decodeIn(const unsigned char* ambe, unsigned int length)
 {
     assert(ambe != 0);
-    assert(length == VOICE_FRAME_LENGTH_BYTES);
+    assert(length == MBE_FRAME_LENGTH_BYTES);
 
-    unsigned char buffer[DV3000_AMBE_HEADER_LEN + VOICE_FRAME_LENGTH_BYTES];
+    unsigned char buffer[DV3000_AMBE_HEADER_LEN + MBE_FRAME_LENGTH_BYTES];
     ::memcpy(buffer, DV3000_AMBE_HEADER, DV3000_AMBE_HEADER_LEN);
-    ::memcpy(buffer + DV3000_AMBE_HEADER_LEN, ambe, VOICE_FRAME_LENGTH_BYTES);
+    ::memcpy(buffer + DV3000_AMBE_HEADER_LEN, ambe, MBE_FRAME_LENGTH_BYTES);
 
-    m_serial.write(buffer, DV3000_AMBE_HEADER_LEN + VOICE_FRAME_LENGTH_BYTES);
+    m_serial.write(buffer, DV3000_AMBE_HEADER_LEN + MBE_FRAME_LENGTH_BYTES);
 }
 
 bool DVController::decodeOut(short* audio, unsigned int length)

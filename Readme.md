@@ -26,6 +26,21 @@ Then to install in your own path say `/opt/install/serialdv`use the following cm
 
 Then to `make` and `make install`
 
-Thant's it!
+That's it!
 
 <h1>Usage</h1>
+
+<h2>Test program</h2>
+
+A test program `dvtest` is created in the `bin` subdirectory of the install directory. This program takes a raw audio samples file as input (S16LE 8 kS/s) encodes it then decodes it and writes the result to an output file with the same format (S16LE 8 kS/s). Standard input and/or standard output can be used for piped commands with the `-` special filename.
+
+Ex: `dvtest -D /dev/ttyUSB0 -f 1 -i ../samples/hts1a.raw -o test.raw`
+
+The full list of parameters can be accessed with the on-line help: `dvtest -h`
+
+In the `samples` subdirectory of the source tree some sample audio files taken from the Codec2 project are provided:
+
+  - `forig.raw`: female voice
+  - `morig.raw`: male voice
+  - `hts1a.raw`: another male voice
+  - `vk5qi.raw`: amateur radio call test (VK5QI). This is a slightly longer sample with a male voice. 

@@ -34,5 +34,17 @@ add_library(serialdv SHARED
     ${serialdv_SOURCES}
 )
 
+add_executable(dvtest
+    dvtest.cpp
+)
+
+target_include_directories(dvtest PUBLIC
+    ${PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+target_link_libraries(dvtest serialdv)
+
+install(TARGETS dvtest DESTINATION bin)
 install(TARGETS serialdv DESTINATION lib)
 install(FILES ${serialdv_HEADERS} DESTINATION include/${PROJECT_NAME})
