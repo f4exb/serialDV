@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <math.h>
 
 #include "dvcontroller.h"
 
@@ -48,6 +49,7 @@ void usage()
     fprintf(stderr, "     0:         None (does nothing - default)\n");
     fprintf(stderr, "     1:         3600x2400 (e.g. D-Star)\n");
     fprintf(stderr, "     2:         3600x2450 (e.g. DMR)\n");
+    fprintf(stderr, "  -g <num>      gain applied to output (decoder)\n");
     fprintf(stderr, "\n");
 }
 
@@ -69,9 +71,10 @@ int main(int argc, char **argv)
     char serialDevice[16];
     std::string dvSerialDevice;
     SerialDV::DVRate dvRate = SerialDV::DVRateNone;
+    float  gainLin;
 
     while ((c = getopt(argc, argv,
-            "hi:o:f:D:")) != -1)
+            "hi:o:f:D:g:")) != -1)
     {
         opterr = 0;
         switch (c)
@@ -98,6 +101,13 @@ int main(int argc, char **argv)
             if ((formatNum >= 0) && (formatNum <= 2))
             {
                 dvRate = (SerialDV::DVRate) formatNum;
+            }
+            break;
+        case 'g':
+            sscanf(optarg, "%f", &gainLin);
+            if (gainLin < 0)
+            {
+                gainLin = 0.0f;
             }
             break;
         default:
@@ -164,6 +174,11 @@ int main(int argc, char **argv)
     {
         fprintf(stderr, "No DV serial device specified. Aborting\n");
         return 0;
+    }
+
+    int gain = (int) (log10f(gainLin)*10.0f);
+    if (!dvController.setGain(0, gain)) {
+        fprintf(stderr, "Unable to set output gain");
     }
 
     while (exitflag == 0)

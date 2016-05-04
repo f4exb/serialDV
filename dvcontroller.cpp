@@ -109,6 +109,50 @@ bool DVController::decode(short *audioFrame, const unsigned char *mbeFrame, DVRa
 	return decodeOut(audioFrame, MBE_AUDIO_BLOCK_SIZE);
 }
 
+bool DVController::setGain(char dBGainIn, char dBGainOut)
+{
+    if (!m_open) {
+        return false;
+    }
+
+    if (dBGainIn < -90) {
+        dBGainIn = -90;
+    } else if (dBGainIn > 90) {
+        dBGainIn = 90;
+    }
+
+    if (dBGainOut < -90) {
+        dBGainOut = -90;
+    } else if (dBGainOut > 90) {
+        dBGainOut = 90;
+    }
+
+    unsigned char buffer[DV3000_REQ_GAIN_LEN + 2];
+    ::memcpy(buffer, DV3000_REQ_GAIN, DV3000_REQ_GAIN_LEN);
+
+    buffer[DV3000_REQ_GAIN_LEN]   = dBGainIn;
+    buffer[DV3000_REQ_GAIN_LEN+1] = dBGainOut;
+
+    m_serial.write(buffer, DV3000_REQ_GAIN_LEN + 2);
+    RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
+
+    if (type == RESP_ERROR)
+    {
+        fprintf(stderr, "DVController::setGain: serial device error\n");
+        return false;
+    }
+    else if (type == RESP_GAIN)
+    {
+        fprintf(stderr, "DVController::setGain: in: %d dB out: %d dB: OK\n", (int) dBGainIn, (int) dBGainOut);
+        return true;
+    }
+    else
+    {
+        fprintf(stderr, "DVController::setGain: response mismatch\n");
+        return false;
+    }
+}
+
 void DVController::encodeIn(const short* audio, unsigned int length)
 {
     assert(audio != 0);
@@ -220,7 +264,6 @@ bool DVController::setRate(DVRate rate)
     if (type == RESP_ERROR)
     {
         fprintf(stderr, "DVController::setRate: serial device error\n");
-        m_serial.close();
         return false;
     }
     else if (type == RESP_RATEP)
@@ -354,6 +397,10 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
         else if (buffer[4] == DV3000_CONTROL_RATEP)
         {
             return RESP_RATEP;
+        }
+        else if (buffer[4] == DV3000_CONTROL_GAIN)
+        {
+            return RESP_GAIN;
         }
         else if (buffer[4] == DV3000_CONTROL_READY)
         {
