@@ -63,14 +63,6 @@ public:
 	 */
 	bool decode(short *audioFrame, const unsigned char *mbeFrame, DVRate rate, int gain = 0);
 
-	/** Set input and output gain in dB (-90 to +90 dB)
-	 * If the input gain is < 0 dB then the input speech samples are attenuated prior to encoding.
-     * If the input gain is > 0 dB then the input speech samples are amplified prior to encoding.
-     * If the output gain is < 0 dB then the output speech samples are attenuated after decoding.
-     * If the output gain is > 0 dB then the output speech samples are amplified after decoding.
-	 */
-	bool setGain(char dBGainIn, char dBGainOut);
-
 private:
 
     enum RESP_TYPE {
@@ -97,6 +89,14 @@ private:
     bool decodeOut(short* audio, unsigned int length);
 
     bool setRate(DVRate rate);
+
+    /** Set input and output gain in dB (-90 to +90 dB)
+     * If the input gain is < 0 dB then the input speech samples are attenuated prior to encoding.
+     * If the input gain is > 0 dB then the input speech samples are amplified prior to encoding.
+     * If the output gain is < 0 dB then the output speech samples are attenuated after decoding.
+     * If the output gain is > 0 dB then the output speech samples are amplified after decoding.
+     */
+    bool setGain(char dBGainIn, char dBGainOut);
 
     RESP_TYPE getResponse(unsigned char* buffer, unsigned int length);
 };
