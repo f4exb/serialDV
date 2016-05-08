@@ -27,7 +27,9 @@ namespace SerialDV
 
 DVController::DVController() :
         m_open(false),
-        m_currentRate(DVRateNone)
+        m_currentRate(DVRateNone),
+        m_currentGainIn(0),
+        m_currentGainOut(0)
 {
 }
 
@@ -76,7 +78,7 @@ void DVController::close()
     m_open = false;
 }
 
-bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRate rate)
+bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRate rate, int gain)
 {
 	if (!m_open) {
 		return false;
@@ -88,12 +90,18 @@ bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRa
 	    m_currentRate = rate;
 	}
 
+	if (gain != m_currentGainIn)
+	{
+	    setGain(gain, m_currentGainOut);
+	    m_currentGainIn = gain;
+	}
+
 	encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE);
 	return encodeOut(mbeFrame, MBE_FRAME_LENGTH_BYTES);
 }
 
 
-bool DVController::decode(short *audioFrame, const unsigned char *mbeFrame, DVRate rate)
+bool DVController::decode(short *audioFrame, const unsigned char *mbeFrame, DVRate rate, int gain)
 {
 	if (!m_open) {
 		return false;
@@ -103,6 +111,12 @@ bool DVController::decode(short *audioFrame, const unsigned char *mbeFrame, DVRa
     {
         setRate(rate);
         m_currentRate = rate;
+    }
+
+    if (gain != m_currentGainOut)
+    {
+        setGain(m_currentGainIn, gain);
+        m_currentGainOut = gain;
     }
 
 	decodeIn(mbeFrame, MBE_FRAME_LENGTH_BYTES);

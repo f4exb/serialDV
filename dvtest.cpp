@@ -177,9 +177,6 @@ int main(int argc, char **argv)
     }
 
     int gain = (int) (log10f(gainLin)*10.0f);
-    if (!dvController.setGain(0, gain)) {
-        fprintf(stderr, "Unable to set output gain");
-    }
 
     while (exitflag == 0)
     {
@@ -206,7 +203,7 @@ int main(int argc, char **argv)
             break;
         }
 
-        if (!dvController.decode(dvAudioSamples, dvMbeSamples, dvRate))
+        if (!dvController.decode(dvAudioSamples, dvMbeSamples, dvRate, gain))
         {
             fprintf(stderr, "Decoding failure. Terminating\n");
             break;

@@ -50,7 +50,7 @@ public:
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BYTES constant is the number of bytes (9)
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BITS constant is the number of bits (72)
 	 */
-	bool encode(const short *audioFrame, unsigned char *mbeFrame, DVRate rate);
+	bool encode(const short *audioFrame, unsigned char *mbeFrame, DVRate rate, int gain = 0);
 
 	/** Encoding process of one AMBE frame to one audio frame
 	 * Buffers are supposed to be allocated with the correct size. That is
@@ -61,7 +61,7 @@ public:
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BYTES constant is the number of bytes (9)
 	 *   - SerialDV::VOICE_FRAME_LENGTH_BITS constant is the number of bits (72)
 	 */
-	bool decode(short *audioFrame, const unsigned char *mbeFrame, DVRate rate);
+	bool decode(short *audioFrame, const unsigned char *mbeFrame, DVRate rate, int gain = 0);
 
 	/** Set input and output gain in dB (-90 to +90 dB)
 	 * If the input gain is < 0 dB then the input speech samples are attenuated prior to encoding.
@@ -87,6 +87,8 @@ private:
     SerialDataController m_serial;
     bool m_open; //!< True if the serial DV device has been correctly opened
     DVRate m_currentRate;
+    int m_currentGainIn;
+    int m_currentGainOut;
 
     void encodeIn(const short* audio, unsigned int length);
     bool encodeOut(unsigned char* ambe, unsigned int length);
