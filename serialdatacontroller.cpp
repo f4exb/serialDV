@@ -43,8 +43,6 @@ namespace SerialDV
 
 #if defined(__WINDOWS__)
 
-const unsigned int BUFFER_LENGTH = 1000U;
-
 SerialDataController::SerialDataController() :
 m_handle(INVALID_HANDLE_VALUE),
 m_readOverlapped(),
@@ -53,8 +51,6 @@ m_readBuffer(NULL),
 m_readLength(0U),
 m_readPending(false)
 {
-    assert(!device.IsEmpty());
-
     m_readBuffer = new unsigned char[BUFFER_LENGTH];
 }
 
@@ -73,7 +69,7 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
 
     DWORD errCode;
 
-    m_handle = ::CreateFile(m_device.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    m_handle = ::CreateFile((const wchar_t*) m_device.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
     if (m_handle == INVALID_HANDLE_VALUE)
     {
         fprintf(stderr, "Cannot open device - %s, err=%04lx\n", m_device.c_str(), ::GetLastError());

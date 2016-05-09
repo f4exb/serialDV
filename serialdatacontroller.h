@@ -55,7 +55,11 @@ const unsigned char DV3000_AMBE_HEADER_LEN  = 6U;
 
 const unsigned int DV3000_HEADER_LEN = 4U;
 
+#ifdef __WINDOWS__
+const unsigned int BUFFER_LENGTH = 1000U;
+#else
 const unsigned int BUFFER_LENGTH = 400U;
+#endif
 
 const unsigned int MBE_AUDIO_BLOCK_SIZE  = 160U;
 const unsigned int MBE_AUDIO_BLOCK_BYTES = MBE_AUDIO_BLOCK_SIZE * 2U;
