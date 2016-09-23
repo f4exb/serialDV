@@ -266,6 +266,9 @@ bool DVController::setRate(DVRate rate)
     case DVRate3600x2450:
         ratepStr = DV3000_REQ_3600X2450_RATEP;
         break;
+    case DVRate2450:
+        ratepStr = DV3000_REQ_2450_RATEP;
+        break;
     default:
         return true;
     }

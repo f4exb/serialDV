@@ -28,7 +28,12 @@ typedef enum
 {
     DVRateNone,
     DVRate3600x2400, //!< D-Star
-    DVRate3600x2450  //!< DMR and the likes
+    DVRate3600x2450, //!< DMR, dPMR, YSF V/D type 1
+    DVRate7200x4400,
+    DVRate7100x4400,
+    DVRate2400,
+    DVRate2450,      //!< YSF V/D type 2 (does not use FEC in AMBE codec)
+    DVRate4400
 } DVRate;
 
 class DVController
