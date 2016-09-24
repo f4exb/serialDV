@@ -399,17 +399,17 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
     return true;
 }
 
-int SerialDataController::read(unsigned char* buffer, unsigned int length)
+int SerialDataController::read(unsigned char* buffer, unsigned int lengthInBytes)
 {
     assert(buffer != 0);
     assert(m_fd != -1);
 
-    if (length == 0U)
+    if (lengthInBytes == 0U)
         return 0;
 
     unsigned int offset = 0U;
 
-    while (offset < length)
+    while (offset < lengthInBytes)
     {
         fd_set fds;
         FD_ZERO(&fds);
@@ -443,7 +443,7 @@ int SerialDataController::read(unsigned char* buffer, unsigned int length)
 
         if (n > 0)
         {
-            ssize_t len = ::read(m_fd, buffer + offset, length - offset);
+            ssize_t len = ::read(m_fd, buffer + offset, lengthInBytes - offset);
 
             if (len < 0)
             {
@@ -460,22 +460,22 @@ int SerialDataController::read(unsigned char* buffer, unsigned int length)
         }
     }
 
-    return length;
+    return lengthInBytes;
 }
 
-int SerialDataController::write(const unsigned char* buffer, unsigned int length)
+int SerialDataController::write(const unsigned char* buffer, unsigned int lengthInBytes)
 {
     assert(buffer != 0);
     assert(m_fd != -1);
 
-    if (length == 0U)
+    if (lengthInBytes == 0U)
         return 0;
 
     unsigned int ptr = 0U;
 
-    while (ptr < length)
+    while (ptr < lengthInBytes)
     {
-        ssize_t n = ::write(m_fd, buffer + ptr, length - ptr);
+        ssize_t n = ::write(m_fd, buffer + ptr, lengthInBytes - ptr);
 
         if (n < 0)
         {
@@ -491,7 +491,7 @@ int SerialDataController::write(const unsigned char* buffer, unsigned int length
         }
     }
 
-    return length;
+    return lengthInBytes;
 }
 
 void SerialDataController::close()

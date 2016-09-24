@@ -51,9 +51,8 @@ public:
 	 * - 320 bytes (160 short samples) for the audio frame.
 	 *   - SerialDV::MBE_AUDIO_BLOCK_BYTES constant is the number of bytes (320)
 	 *   - SerialDV::MBE_AUDIO_BLOCK_SIZE constant is the number of short samples (160)
-	 * - 9 bytes (72 bits) for the AMBE frame.
-	 *   - SerialDV::VOICE_FRAME_LENGTH_BYTES constant is the number of bytes (9)
-	 *   - SerialDV::VOICE_FRAME_LENGTH_BITS constant is the number of bits (72)
+	 * - 9 or 18 bytes (72 or 144 bits) for the AMBE frame.
+	 *   - SerialDV::VOICE_FRAME_MAX_LENGTH_BYTES constant is the maximum number of bytes (18)
 	 */
 	bool encode(const short *audioFrame, unsigned char *mbeFrame, DVRate rate, int gain = 0);
 
@@ -62,11 +61,18 @@ public:
 	 * - 320 bytes (160 short samples) for the audio frame.
 	 *   - SerialDV::MBE_AUDIO_BLOCK_BYTES constant is the number of bytes (320)
 	 *   - SerialDV::MBE_AUDIO_BLOCK_SIZE constant is the number of short samples (160)
-	 * - 9 bytes (72 bits) for the AMBE frame.
-	 *   - SerialDV::VOICE_FRAME_LENGTH_BYTES constant is the number of bytes (9)
-	 *   - SerialDV::VOICE_FRAME_LENGTH_BITS constant is the number of bits (72)
+	 * - 9 or 18 bytes (72 or 144 bits) for the AMBE frame.
+     *   - SerialDV::VOICE_FRAME_MAX_LENGTH_BYTES constant is the maximum number of bytes (18)
 	 */
 	bool decode(short *audioFrame, const unsigned char *mbeFrame, DVRate rate, int gain = 0);
+
+	/** Returns the number of bytes in a MBE frame given the MBE rate
+	 */
+	static unsigned short getNbMbeBytes(DVRate mbeRate);
+
+    /** Returns the number of bits in a MBE frame given the MBE rate
+     */
+    static unsigned char getNbMbeBits(DVRate mbeRate);
 
 private:
 
@@ -86,11 +92,21 @@ private:
     DVRate m_currentRate;
     int m_currentGainIn;
     int m_currentGainOut;
+    unsigned char m_currentNbMbeBits;
+    unsigned short m_currentNbMbeBytes;
+    bool m_littleEndian;
+
+    bool isLittleEndian()
+    {
+        short int number = 0x1;
+        char *numPtr = (char*)&number;
+        return (numPtr[0] == 1);
+    }
 
     void encodeIn(const short* audio, unsigned int length);
     bool encodeOut(unsigned char* ambe, unsigned int length);
 
-    void decodeIn(const unsigned char* ambe, unsigned int length);
+    void decodeIn(const unsigned char* ambe, unsigned char nbBits, unsigned short nbBytes);
     bool decodeOut(short* audio, unsigned int length);
 
     bool setRate(DVRate rate);

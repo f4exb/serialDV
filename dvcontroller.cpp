@@ -29,8 +29,11 @@ DVController::DVController() :
         m_open(false),
         m_currentRate(DVRateNone),
         m_currentGainIn(0),
-        m_currentGainOut(0)
+        m_currentGainOut(0),
+        m_currentNbMbeBits(72),
+        m_currentNbMbeBytes(9)
 {
+    m_littleEndian = isLittleEndian();
 }
 
 DVController::~DVController()
@@ -97,7 +100,7 @@ bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRa
 	}
 
 	encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE);
-	return encodeOut(mbeFrame, MBE_FRAME_LENGTH_BYTES);
+	return encodeOut(mbeFrame, m_currentNbMbeBytes);
 }
 
 
@@ -119,8 +122,60 @@ bool DVController::decode(short *audioFrame, const unsigned char *mbeFrame, DVRa
         m_currentGainOut = gain;
     }
 
-	decodeIn(mbeFrame, MBE_FRAME_LENGTH_BYTES);
+	decodeIn(mbeFrame, m_currentNbMbeBits, m_currentNbMbeBytes);
 	return decodeOut(audioFrame, MBE_AUDIO_BLOCK_SIZE);
+}
+
+unsigned short DVController::getNbMbeBytes(DVRate mbeRate)
+{
+    switch (mbeRate)
+    {
+    case DVRateNone:
+        return 0;
+    case DVRate3600x2400:
+        return 9;
+        break;
+    case DVRate3600x2450:
+        return 9;
+        break;
+    case DVRate7200x4400:
+        return 18;
+        break;
+    case DVRate2450:
+        return 7;
+        break;
+    case DVRate4400:
+        return 11;
+        break;
+    default:
+        return 0;
+    }
+}
+
+unsigned char DVController::getNbMbeBits(DVRate mbeRate)
+{
+    switch (mbeRate)
+    {
+    case DVRateNone:
+        return 0;
+    case DVRate3600x2400:
+        return 72;
+        break;
+    case DVRate3600x2450:
+        return 72;
+        break;
+    case DVRate7200x4400:
+        return 144;
+        break;
+    case DVRate2450:
+        return 49;
+        break;
+    case DVRate4400:
+        return 88;
+        break;
+    default:
+        return 0;
+    }
 }
 
 bool DVController::setGain(char dBGainIn, char dBGainOut)
@@ -191,7 +246,7 @@ void DVController::encodeIn(const short* audio, unsigned int length)
 bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
 {
     assert(ambe != 0);
-    assert(length == MBE_FRAME_LENGTH_BYTES);
+    assert(length == m_currentNbMbeBytes);
 
     unsigned char buffer[BUFFER_LENGTH];
     RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
@@ -202,21 +257,36 @@ bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
         return false;
     }
 
-    ::memcpy(ambe, buffer + DV3000_AMBE_HEADER_LEN, MBE_FRAME_LENGTH_BYTES);
+    ::memcpy(ambe, buffer + DV3000_AMBE_HEADER_LEN, length);
 
     return true;
 }
 
-void DVController::decodeIn(const unsigned char* ambe, unsigned int length)
+void DVController::decodeIn(const unsigned char* ambe, unsigned char nbBits, unsigned short nbBytes)
 {
     assert(ambe != 0);
-    assert(length == MBE_FRAME_LENGTH_BYTES);
+    assert(nbBytes == m_currentNbMbeBytes);
+    unsigned short length = nbBytes + 2;
+    unsigned char *lengthPtr = (unsigned char *) &length;
 
-    unsigned char buffer[DV3000_AMBE_HEADER_LEN + MBE_FRAME_LENGTH_BYTES];
+    unsigned char buffer[DV3000_AMBE_HEADER_LEN + MBE_FRAME_MAX_LENGTH_BYTES];
     ::memcpy(buffer, DV3000_AMBE_HEADER, DV3000_AMBE_HEADER_LEN);
-    ::memcpy(buffer + DV3000_AMBE_HEADER_LEN, ambe, MBE_FRAME_LENGTH_BYTES);
+    ::memcpy(buffer + DV3000_AMBE_HEADER_LEN, ambe, nbBytes);
 
-    m_serial.write(buffer, DV3000_AMBE_HEADER_LEN + MBE_FRAME_LENGTH_BYTES);
+    if (m_littleEndian)
+    {
+        ::memcpy(&buffer[1], &lengthPtr[1], 1); // set header length field with little endian byte order
+        ::memcpy(&buffer[2], &lengthPtr[0], 1); // set header length field with little endian byte order
+    }
+    else
+    {
+        ::memcpy(&buffer[1], &lengthPtr[0], 1); // set header length field with big endian byte order
+        ::memcpy(&buffer[2], &lengthPtr[1], 1); // set header length field with big endian byte order
+    }
+
+    ::memcpy(&buffer[5], &nbBits, 1); // set CHAND number of bits
+
+    m_serial.write(buffer, DV3000_AMBE_HEADER_LEN + nbBytes);
 }
 
 bool DVController::decodeOut(short* audio, unsigned int length)
@@ -262,12 +332,28 @@ bool DVController::setRate(DVRate rate)
         return true;
     case DVRate3600x2400:
         ratepStr = DV3000_REQ_3600X2400_RATEP;
+        m_currentNbMbeBits = 72;
+        m_currentNbMbeBytes = 9;
         break;
     case DVRate3600x2450:
         ratepStr = DV3000_REQ_3600X2450_RATEP;
+        m_currentNbMbeBits = 72;
+        m_currentNbMbeBytes = 9;
+        break;
+    case DVRate7200x4400:
+        ratepStr = DV3000_REQ_7200X4400_3_RATEP; // AMBE 3000 version
+        m_currentNbMbeBits = 144;
+        m_currentNbMbeBytes = 18;
         break;
     case DVRate2450:
         ratepStr = DV3000_REQ_2450_RATEP;
+        m_currentNbMbeBits = 49;
+        m_currentNbMbeBytes = 7;
+        break;
+    case DVRate4400:
+        ratepStr = DV3000_REQ_4400_RATEP;
+        m_currentNbMbeBits = 88;
+        m_currentNbMbeBytes = 11;
         break;
     default:
         return true;
@@ -305,7 +391,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
     int packetLength, offset;
     unsigned char packetType;
 
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 2000; i++)
     {
         int len1 = m_serial.read(buffer, 1U);
 
@@ -333,7 +419,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
     offset = 0;
     found = false;
 
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 2000; i++)
     {
         int len1 = m_serial.read(&buffer[1 + offset], packetLength - offset);
 
@@ -366,7 +452,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
     offset = 0;
     found = false;
 
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 2000; i++)
     {
         int len1 = m_serial.read(&buffer[4 + offset], packetLength - offset);
 
