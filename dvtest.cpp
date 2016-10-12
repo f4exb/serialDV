@@ -49,6 +49,11 @@ void usage()
     fprintf(stderr, "     0:         None (does nothing - default)\n");
     fprintf(stderr, "     1:         3600x2400 (e.g. D-Star)\n");
     fprintf(stderr, "     2:         3600x2450 (e.g. DMR)\n");
+    fprintf(stderr, "     3:         7200x4400\n");
+    fprintf(stderr, "     4:         7100x4400\n");
+    fprintf(stderr, "     5:         2400 no FEC\n");
+    fprintf(stderr, "     6:         2450 no FEC\n");
+    fprintf(stderr, "     7:         4400 no FEC\n");
     fprintf(stderr, "  -g <num>      gain applied to output (decoder)\n");
     fprintf(stderr, "\n");
 }
@@ -91,14 +96,12 @@ int main(int argc, char **argv)
             out_file[1023] = '\0';
             break;
         case 'D':
-            strncpy(serialDevice, (const char *) optarg, 16);
-            serialDevice[16] = '\0';
-            dvSerialDevice = serialDevice;
+            dvSerialDevice = std::string(optarg);
             break;
         case 'f':
             int formatNum;
             sscanf(optarg, "%d", &formatNum);
-            if ((formatNum >= 0) && (formatNum <= 2))
+            if ((formatNum >= 0) && (formatNum <= 7))
             {
                 dvRate = (SerialDV::DVRate) formatNum;
             }
