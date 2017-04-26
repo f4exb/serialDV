@@ -54,7 +54,7 @@ void usage()
     fprintf(stderr, "     5:         2400 no FEC\n");
     fprintf(stderr, "     6:         2450 no FEC\n");
     fprintf(stderr, "     7:         4400 no FEC\n");
-    fprintf(stderr, "  -g <num>      gain applied to output (decoder)\n");
+    fprintf(stderr, "  -g <num>      linear gain applied to output (decoder - default 1.0)\n");
     fprintf(stderr, "\n");
 }
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     char serialDevice[16];
     std::string dvSerialDevice;
     SerialDV::DVRate dvRate = SerialDV::DVRateNone;
-    float  gainLin;
+    float  gainLin = 1.0f;
 
     while ((c = getopt(argc, argv,
             "hi:o:f:D:g:")) != -1)

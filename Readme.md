@@ -36,6 +36,8 @@ A test program `dvtest` is created in the `bin` subdirectory of the install dire
 
 Ex: `dvtest -D /dev/ttyUSB0 -f 1 -i ../samples/hts1a.raw -o test.raw`
 
+Then you can play back the file with sox package installed: `play -r 8k -e signed-integer -b 16 test.raw`
+
 The full list of parameters can be accessed with the on-line help: `dvtest -h`
 
 In the `samples` subdirectory of the source tree some sample audio files taken from the Codec2 project are provided:
