@@ -310,7 +310,9 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
     m_device = device;
     m_speed = speed;
 
-    m_fd = ::open(m_device.c_str(), O_RDWR | O_NOCTTY | O_NDELAY, 0);
+//    m_fd = ::open(m_device.c_str(), O_RDWR | O_NOCTTY | O_NDELAY, 0);
+    m_fd = ::open(m_device.c_str(), O_RDWR | O_NOCTTY | O_SYNC, 0); // https://raw.githubusercontent.com/n8ohu/DMRRepeater/master/AMBETools/DV3000/dv3000d.c
+
 
     if (m_fd < 0)
     {
@@ -342,6 +344,23 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
     termios.c_oflag &= ~(OPOST);
     termios.c_cc[VMIN] = 0;
     termios.c_cc[VTIME] = 10;
+
+    // https://raw.githubusercontent.com/n8ohu/DMRRepeater/master/AMBETools/DV3000/dv3000d.c
+//    termios.c_cflag = (termios.c_cflag & ~CSIZE) | CS8;
+//    termios.c_iflag &= ~IGNBRK;
+//    termios.c_lflag = 0;
+//
+//    termios.c_oflag = 0;
+//    termios.c_cc[VMIN]  = 0;
+//    termios.c_cc[VTIME] = 5;
+//
+//    termios.c_iflag &= ~(IXON | IXOFF | IXANY);
+//
+//    termios.c_cflag |= (CLOCAL | CREAD);
+//
+//    termios.c_cflag &= ~(PARENB | PARODD);
+//    termios.c_cflag &= ~CSTOPB;
+//    termios.c_cflag &= ~CRTSCTS;
 
     switch (m_speed)
     {
