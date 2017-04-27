@@ -18,10 +18,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <math.h>
 
@@ -181,6 +183,11 @@ int main(int argc, char **argv)
 
     int gain = (int) (log10f(gainLin)*10.0f);
 
+    fprintf(stderr, "Start of process\n");
+
+    struct timeval tvstart, tvend;
+    gettimeofday(&tvstart, 0);
+
     while (exitflag == 0)
     {
         short sample;
@@ -224,7 +231,14 @@ int main(int argc, char **argv)
         }
     }
 
+    gettimeofday(&tvend, 0);
+
     fprintf(stderr, "End of process\n");
+
+    struct timeval tvdiff;
+    timersub(&tvend, &tvstart, &tvdiff);
+    uint64_t ms = tvdiff.tv_sec*1000000 + tvdiff.tv_usec;
+    fprintf(stderr, "Done in %f seconds\n", ms / 1e6);
 
     dvController.close();
 
