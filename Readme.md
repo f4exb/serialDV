@@ -1,6 +1,12 @@
 SerialDV
 ========
 
+**Warning**
+
+Since kernel 4.4.52 the default for FTDI devices (that is in the ftdi_sio kernel module) is not to set it as low latency. This results in the ThumbDV dongle not working anymore because its response is too slow to sustain the normal AMBE packets flow. The solution is to force low latency by changing the variable for your device (ex: /dev/ttyUSB0) as follows:
+
+`echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer`
+
 **SerialDV** is inspired from the [OpenDV project](https://github.com/dl5di/OpenDV.git) but retains only the minimal interface to encode and decode audio with AMBE3000 based devices in packet mode over a serial link.
 
 For details on the packet interface of AMBE3000 chip download the documentation on [DVSI website](http://www.dvsinc.com/products/a3000.htm)

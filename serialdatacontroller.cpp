@@ -30,6 +30,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <linux/serial.h>
 #include <cerrno>
 #include <fcntl.h>
 #include <unistd.h>
@@ -310,9 +311,7 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
     m_device = device;
     m_speed = speed;
 
-//    m_fd = ::open(m_device.c_str(), O_RDWR | O_NOCTTY | O_NDELAY, 0);
-    m_fd = ::open(m_device.c_str(), O_RDWR | O_NOCTTY | O_SYNC, 0); // https://raw.githubusercontent.com/n8ohu/DMRRepeater/master/AMBETools/DV3000/dv3000d.c
-
+    m_fd = ::open(m_device.c_str(), O_RDWR | O_NOCTTY | O_NDELAY, 0);
 
     if (m_fd < 0)
     {
@@ -326,6 +325,29 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
         ::close(m_fd);
         return false;
     }
+
+    // This is an attempt to fix a bug introduced in the FTDI driver in kernel 4.4.52
+    // However this works only if you execute as root
+    // You will have to stick to an older kernel until a fix is found or run as root
+    // This bug introduces too much latency that prevents packets to flow on time
+
+    // A more persistent way to do this is to execute once per /dev/ttyUSBx lifetime:
+    // echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSBx/latency_timer
+    // Of course replace "x" by your ttyUSB device number
+
+    struct serial_struct serial;
+
+    if (::ioctl(m_fd, TIOCGSERIAL, &serial) < 0) {
+        fprintf(stderr, "SerialDataController::open: ioctl: Cannot get serial_struct\n");
+    }
+
+    serial.flags |= ASYNC_LOW_LATENCY;
+
+    if (::ioctl(m_fd, TIOCSSERIAL, &serial) < 0) {
+        fprintf(stderr, "SerialDataController::open: ioctl: Cannot set ASYNC_LOW_LATENCY\n");
+    }
+
+    // Set "terminal" characteristics
 
     termios termios;
 
@@ -344,23 +366,6 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
     termios.c_oflag &= ~(OPOST);
     termios.c_cc[VMIN] = 0;
     termios.c_cc[VTIME] = 10;
-
-    // https://raw.githubusercontent.com/n8ohu/DMRRepeater/master/AMBETools/DV3000/dv3000d.c
-//    termios.c_cflag = (termios.c_cflag & ~CSIZE) | CS8;
-//    termios.c_iflag &= ~IGNBRK;
-//    termios.c_lflag = 0;
-//
-//    termios.c_oflag = 0;
-//    termios.c_cc[VMIN]  = 0;
-//    termios.c_cc[VTIME] = 5;
-//
-//    termios.c_iflag &= ~(IXON | IXOFF | IXANY);
-//
-//    termios.c_cflag |= (CLOCAL | CREAD);
-//
-//    termios.c_cflag &= ~(PARENB | PARODD);
-//    termios.c_cflag &= ~CSTOPB;
-//    termios.c_cflag &= ~CRTSCTS;
 
     switch (m_speed)
     {
@@ -401,14 +406,14 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
         ::cfsetispeed(&termios, B460800);
         break;
     default:
-        fprintf(stderr, "SerialDataController::open: Unsupported serial port speed - %d", int(m_speed));
+        fprintf(stderr, "SerialDataController::open: Unsupported serial port speed - %d\n", int(m_speed));
         ::close(m_fd);
         return false;
     }
 
     if (::tcsetattr(m_fd, TCSANOW, &termios) < 0)
     {
-        fprintf(stderr, "SerialDataController::open: Cannot set the attributes for %s", m_device.c_str());
+        fprintf(stderr, "SerialDataController::open: Cannot set the attributes for %s\n", m_device.c_str());
         ::close(m_fd);
         return false;
     }
