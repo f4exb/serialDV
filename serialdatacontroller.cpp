@@ -294,8 +294,8 @@ void SerialDataController::close()
 #else
 
 SerialDataController::SerialDataController() :
-		m_fd(-1),
-		m_speed(SERIAL_NONE)
+        m_speed(SERIAL_NONE),
+		m_fd(-1)
 {
 }
 

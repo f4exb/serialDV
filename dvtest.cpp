@@ -60,7 +60,7 @@ void usage()
     fprintf(stderr, "\n");
 }
 
-void sigfun(int sig)
+void sigfun(int sig __attribute__((unused)))
 {
     exitflag = 1;
     signal(SIGINT, SIG_DFL);
@@ -70,15 +70,22 @@ int main(int argc, char **argv)
 {
     int c;
     extern char *optarg;
-    extern int optind, opterr, optopt;
-    char in_file[1023];
+    extern int optind __attribute__((unused));
+    extern int opterr __attribute__((unused));
+    extern int optopt __attribute__((unused));
+    char in_file[1024];
     int  in_file_fd = -1;
-    char out_file[1023];
+    char out_file[1024];
     int  out_file_fd = -1;
-    char serialDevice[16];
     std::string dvSerialDevice;
     SerialDV::DVRate dvRate = SerialDV::DVRateNone;
     float  gainLin = 1.0f;
+
+    // Catch Ctrl-C and SIGTERM
+    struct sigaction sigact;
+    sigact.sa_handler = sigfun;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_flags = SA_RESETHAND;
 
     while ((c = getopt(argc, argv,
             "hi:o:f:D:g:")) != -1)
@@ -190,10 +197,6 @@ int main(int argc, char **argv)
 
     while (exitflag == 0)
     {
-        short sample;
-        int nbAudioSamples;
-        short *audioSamples;
-
         int result = read(in_file_fd, (void *) dvAudioSamples, SerialDV::MBE_AUDIO_BLOCK_BYTES);
 
         if (result == 0)
