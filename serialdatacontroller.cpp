@@ -345,6 +345,7 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
 
     if (::ioctl(m_fd, TIOCSSERIAL, &serial) < 0) {
         fprintf(stderr, "SerialDataController::open: ioctl: Cannot set ASYNC_LOW_LATENCY\n");
+        return false;
     }
 
     // Set "terminal" characteristics
