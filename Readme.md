@@ -7,6 +7,12 @@ Since kernel 4.4.52 the default for FTDI devices (that is in the ftdi_sio kernel
 
 `echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer`
 
+You can also install the `setserial` package an do the following:
+
+`sudo setserial /dev/ttyUSB0 low_latency`
+
+A device that cannot be opened with low latency will be rejected. This way the non DVSI device candidates are filtered out.
+
 **SerialDV** is inspired from the [OpenDV project](https://github.com/dl5di/OpenDV.git) but retains only the minimal interface to encode and decode audio with AMBE3000 based devices in packet mode over a serial link.
 
 For details on the packet interface of AMBE3000 chip download the documentation on [DVSI website](http://www.dvsinc.com/products/a3000.htm)
