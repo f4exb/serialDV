@@ -14,10 +14,11 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.          //
 ///////////////////////////////////////////////////////////////////////////////////
 
+#include <chrono>
+#include <thread>
 #include <cassert>
 #include <cstdio>
 #include <cstring>
-#include <unistd.h>
 #include <stdint.h>
 
 #include "dvcontroller.h"
@@ -222,8 +223,9 @@ bool DVController::setGain(char dBGainIn, char dBGainOut)
     }
 }
 
-void DVController::encodeIn(const short* audio, unsigned int length __attribute__((unused)))
+void DVController::encodeIn(const short* audio, unsigned int length)
 {
+    (void) length;
     assert(audio != 0);
     assert(length == MBE_AUDIO_BLOCK_SIZE);
 
@@ -289,8 +291,9 @@ void DVController::decodeIn(const unsigned char* ambe, unsigned char nbBits, uns
     m_serial.write(buffer, DV3000_AMBE_HEADER_LEN + nbBytes);
 }
 
-bool DVController::decodeOut(short* audio, unsigned int length __attribute__((unused)))
+bool DVController::decodeOut(short* audio, unsigned int length)
 {
+    (void) length;
     assert(audio != 0);
     assert(length == MBE_AUDIO_BLOCK_SIZE);
 
@@ -382,8 +385,9 @@ bool DVController::setRate(DVRate rate)
 
 }
 
-DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigned int length __attribute__((unused)))
+DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigned int length)
 {
+    (void) length;
     assert(buffer != 0);
     assert(length >= BUFFER_LENGTH);
 
@@ -406,7 +410,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
             break;
         }
 
-        usleep(100UL);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
 
     if (!found)
@@ -438,7 +442,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
             offset += len1;
         }
 
-        usleep(100UL);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
 
     if (!found)
@@ -471,7 +475,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
             offset += len1;
         }
 
-        usleep(100UL);
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
     }
 
     if (!found) {
