@@ -24,6 +24,7 @@ set(serialdv_SOURCES
 )
 
 set(serialdv_HEADERS
+  serialdv_export.h
   serialdatacontroller.h
   dvcontroller.h
 )

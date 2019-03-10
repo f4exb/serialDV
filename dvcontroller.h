@@ -19,7 +19,7 @@
 
 #include <string>
 
-#include "export.h"
+#include "serialdv_export.h"
 #include "serialdatacontroller.h"
 
 namespace SerialDV

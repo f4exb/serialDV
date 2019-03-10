@@ -22,7 +22,7 @@
 #endif
 
 #include <string>
-#include "export.h"
+#include "serialdv_export.h"
 
 namespace SerialDV
 {
