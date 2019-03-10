@@ -22,6 +22,7 @@
 #endif
 
 #include <string>
+#include "export.h"
 
 namespace SerialDV
 {
@@ -87,7 +88,7 @@ enum SERIAL_SPEED {
     SERIAL_460800 = 460800
 };
 
-class SerialDataController {
+class SERIALDV_API SerialDataController {
 public:
     SerialDataController();
     ~SerialDataController();

@@ -19,6 +19,7 @@
 
 #include <string>
 
+#include "export.h"
 #include "serialdatacontroller.h"
 
 namespace SerialDV
@@ -36,7 +37,7 @@ typedef enum
     DVRate4400
 } DVRate;
 
-class DVController
+class SERIALDV_API DVController
 {
 public:
 	DVController();
