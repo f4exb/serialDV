@@ -70,7 +70,7 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
 
     DWORD errCode;
 
-    m_handle = ::CreateFile((const wchar_t*) m_device.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+    m_handle = ::CreateFile(m_device.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
     if (m_handle == INVALID_HANDLE_VALUE)
     {
         fprintf(stderr, "Cannot open device - %s, err=%04lx\n", m_device.c_str(), ::GetLastError());
