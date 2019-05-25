@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.1.0)
 
+project(serialdv)
+
+option(BUILD_TOOL "Build dvtest tool" ON)
+
 # use, i.e. don't skip the full RPATH for the build tree
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 
@@ -21,9 +25,12 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 #list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
 # Compiler flags.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O2 -ffast-math -ftree-vectorize ${EXTRA_FLAGS}")
-
-project(serialdv)
+if(WIN32)
+  add_definitions(-D__WINDOWS__)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall ${EXTRA_FLAGS}")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O2 -ffast-math -ftree-vectorize ${EXTRA_FLAGS}")
+endif()
 
 set(serialdv_SOURCES
   serialdatacontroller.cpp
@@ -45,6 +52,7 @@ add_library(serialdv SHARED
     ${serialdv_SOURCES}
 )
 
+if(BUILD_TOOL)
 add_executable(dvtest
     dvtest.cpp
 )
@@ -57,5 +65,7 @@ target_include_directories(dvtest PUBLIC
 target_link_libraries(dvtest serialdv)
 
 install(TARGETS dvtest DESTINATION bin)
+endif(BUILD_TOOL)
+
 install(TARGETS serialdv DESTINATION lib)
 install(FILES ${serialdv_HEADERS} DESTINATION include/${PROJECT_NAME})
