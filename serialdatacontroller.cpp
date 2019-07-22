@@ -280,7 +280,7 @@ int SerialDataController::write(const unsigned char* buffer, unsigned int length
     return int(length);
 }
 
-void SerialDataController::close()
+void SerialDataController::closeIt()
 {
     assert(m_handle != INVALID_HANDLE_VALUE);
 
@@ -424,11 +424,6 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
     return true;
 }
 
-bool SerialDataController::initResponse()
-{
-    return true; // Do nothing for serial
-}
-
 int SerialDataController::read(unsigned char* buffer, unsigned int lengthInBytes)
 {
     assert(buffer != 0);
@@ -536,5 +531,11 @@ void SerialDataController::closeIt()
 }
 
 #endif // WINDOWS
+
+bool SerialDataController::initResponse()
+{
+    return true; // Do nothing for serial
+}
+
 
 } // namespace SerialDV

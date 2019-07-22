@@ -21,6 +21,7 @@
 #ifdef __WINDOWS__
 #include <winsock2.h>
 #include <WS2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -95,8 +96,7 @@ bool UDPDataController::open(const std::string& ipAndPort, SERIAL_SPEED speed)
 
 bool UDPDataController::initResponse()
 {
-    socklen_t addrLen = sizeof(struct sockaddr_in);
-    m_responseSize = recvfrom(m_sockFd, m_responseBuffer, 2000, 0, (struct sockaddr *) m_ra, &addrLen);
+    m_responseSize = timeout_recvfrom(m_sockFd, (char *) m_responseBuffer, 2000, m_ra, 50000);
     m_responseIndex = 0;
     //std::cerr << "UDPDataController::initResponse: read: " << m_responseSize << std::endl;
     return m_responseSize > 0;
@@ -129,7 +129,11 @@ int UDPDataController::read(unsigned char* buffer, unsigned int lengthInBytes)
 
 int UDPDataController::write(const unsigned char* buffer, unsigned int lengthInBytes)
 {
+#ifdef __WINDOWS__
+    int nbytes = sendto(m_sockFd, (const char *) buffer, lengthInBytes, 0, (const sockaddr *) m_sa, sizeof(struct sockaddr_in));
+#else
     int nbytes = sendto(m_sockFd, buffer, lengthInBytes, 0, (const sockaddr *) m_sa, sizeof(struct sockaddr_in));
+#endif
     //std::cerr << "UDPDataController::write: length: " << lengthInBytes << " written: " << nbytes << std::endl;
     return nbytes;
 }
@@ -196,6 +200,27 @@ void UDPDataController::setSendAddress(std::string& address, int port)
     m_sa->sin_family = AF_INET;
     m_sa->sin_port = htons(port);
     m_sa->sin_addr.s_addr = inet_addr(address.c_str());
+}
+
+int UDPDataController::timeout_recvfrom(int sock, char *buf, int length, struct sockaddr_in *connection, int timeoutinmicroseconds)
+{
+    fd_set socks;
+    struct timeval t;
+    FD_ZERO(&socks);
+    FD_SET(sock, &socks);
+    t.tv_sec = timeoutinmicroseconds / 1000000;
+    t.tv_usec = timeoutinmicroseconds % 1000000;
+
+    if (select(sock + 1, &socks, nullptr, nullptr, &t))
+    {
+        socklen_t addrLen = sizeof(struct sockaddr_in);
+        int nbytes = recvfrom(sock, buf, length, 0, (struct sockaddr *)connection, &addrLen);
+        return nbytes;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 } // namespace SerialDV

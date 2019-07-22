@@ -42,6 +42,7 @@ private:
     void openSocket(int port);
     void closeSocket();
     void setSendAddress(std::string& address, int port);
+    int timeout_recvfrom(int sock, char *buf, int length, struct sockaddr_in *connection, int timeoutinmicroseconds);
 
     std::string m_ipAddress;
     int m_port;

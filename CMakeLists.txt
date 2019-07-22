@@ -56,7 +56,7 @@ add_library(serialdv SHARED
     ${serialdv_SOURCES}
 )
 
-if(BUILD_TOOL)
+if(BUILD_TOOL AND NOT WIN32)
 add_executable(dvtest
     dvtest.cpp
 )
@@ -69,7 +69,7 @@ target_include_directories(dvtest PUBLIC
 target_link_libraries(dvtest serialdv)
 
 install(TARGETS dvtest DESTINATION bin)
-endif(BUILD_TOOL)
+endif(BUILD_TOOL AND NOT WIN32)
 
 install(TARGETS serialdv DESTINATION lib)
 install(FILES ${serialdv_HEADERS} DESTINATION include/${PROJECT_NAME})
