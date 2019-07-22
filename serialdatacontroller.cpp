@@ -424,6 +424,11 @@ bool SerialDataController::open(const std::string& device, SERIAL_SPEED speed)
     return true;
 }
 
+bool SerialDataController::initResponse()
+{
+    return true; // Do nothing for serial
+}
+
 int SerialDataController::read(unsigned char* buffer, unsigned int lengthInBytes)
 {
     assert(buffer != 0);
@@ -519,7 +524,7 @@ int SerialDataController::write(const unsigned char* buffer, unsigned int length
     return lengthInBytes;
 }
 
-void SerialDataController::close()
+void SerialDataController::closeIt()
 {
     assert(m_fd != -1);
 

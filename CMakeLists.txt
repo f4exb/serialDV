@@ -33,13 +33,17 @@ else()
 endif()
 
 set(serialdv_SOURCES
+  datacontroller.cpp
   serialdatacontroller.cpp
+  udpdatacontroller.cpp
   dvcontroller.cpp
 )
 
 set(serialdv_HEADERS
   serialdv_export.h
+  datacontroller.h
   serialdatacontroller.h
+  udpdatacontroller.h
   dvcontroller.h
 )
 

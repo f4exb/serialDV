@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2016 Edouard Griffiths, F4EXB.                                  //
+// Copyright (C) 2019 Edouard Griffiths, F4EXB.                                  //
 //                                                                               //
 // This program is free software; you can redistribute it and/or modify          //
 // it under the terms of the GNU General Public License as published by          //
@@ -14,56 +14,47 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.          //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SERIALDATACONTROLLER_H_
-#define SERIALDATACONTROLLER_H_
+#ifndef DATACONTROLLER_H_
+#define DATACONTROLLER_H_
 
-#if defined(__WINDOWS__)
-#include <windows.h>
-#endif
-
-#include "datacontroller.h"
+#include <string>
+#include "serialdv_export.h"
 
 namespace SerialDV
 {
 
-#ifdef __WINDOWS__
-const unsigned int BUFFER_LENGTH = 1000U;
-#else
-const unsigned int BUFFER_LENGTH = 400U;
-#endif
+const unsigned int MBE_AUDIO_BLOCK_SIZE_INTERNAL  = 160U;
+const unsigned int MBE_AUDIO_BLOCK_BYTES_INTERNAL = MBE_AUDIO_BLOCK_SIZE_INTERNAL * 2U;
+const unsigned int MBE_FRAME_MAX_LENGTH_BYTES_INTERNAL = 18U;
 
-class SERIALDV_API SerialDataController : public DataController {
+enum SERIAL_SPEED {
+	SERIAL_NONE   = 0,
+    SERIAL_1200   = 1200,
+    SERIAL_2400   = 2400,
+    SERIAL_4800   = 4800,
+    SERIAL_9600   = 9600,
+    SERIAL_19200  = 19200,
+    SERIAL_38400  = 38400,
+    SERIAL_76800  = 76800,
+    SERIAL_115200 = 115200,
+    SERIAL_230400 = 230400,
+    SERIAL_460800 = 460800
+};
+
+class SERIALDV_API DataController {
 public:
-    SerialDataController();
-    virtual ~SerialDataController();
+    DataController();
+    virtual ~DataController();
 
-    virtual bool open(const std::string& device, SERIAL_SPEED speed);
+    virtual bool open(const std::string& device, SERIAL_SPEED speed) = 0;
 
-    virtual bool initResponse();
-    virtual int  read(unsigned char* buffer, unsigned int lengthInBytes);
-    virtual int  write(const unsigned char* buffer, unsigned int lengthInBytes);
+    virtual bool initResponse() = 0;
+    virtual int  read(unsigned char* buffer, unsigned int lengthInBytes) = 0;
+    virtual int  write(const unsigned char* buffer, unsigned int lengthInBytes) = 0;
 
-    virtual void closeIt();
-
-private:
-    std::string    m_device;
-    SERIAL_SPEED   m_speed;
-#if defined(__WINDOWS__)
-    HANDLE         m_handle;
-    OVERLAPPED     m_readOverlapped;
-    OVERLAPPED     m_writeOverlapped;
-    unsigned char* m_readBuffer;
-    unsigned int   m_readLength;
-    bool           m_readPending;
-#else
-    int            m_fd;
-#endif
-
-#if defined(__WINDOWS__)
-    int readNonblock(unsigned char* buffer, unsigned int length);
-#endif
+    virtual void closeIt() = 0;
 };
 
 } // namespace SerialDV
 
-#endif /* SERIALDATACONTROLLER_H_ */
+#endif // DATACONTROLLER_H_

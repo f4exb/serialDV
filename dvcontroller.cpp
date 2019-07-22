@@ -21,12 +21,15 @@
 #include <cstring>
 #include <stdint.h>
 
+#include "udpdatacontroller.h"
+#include "serialdatacontroller.h"
 #include "dvcontroller.h"
 
 namespace SerialDV
 {
 
 DVController::DVController() :
+        m_serial(nullptr),
         m_open(false),
         m_currentRate(DVRateNone),
         m_currentGainIn(0),
@@ -39,18 +42,28 @@ DVController::DVController() :
 
 DVController::~DVController()
 {
+    if (m_serial) {
+        delete m_serial;
+    }
 }
 
 bool DVController::open(const std::string& device, bool halfSpeed)
 {
     m_open = false;
-    bool res = m_serial.open(device, halfSpeed ? SERIAL_230400 : SERIAL_460800);
+
+    if (device.find(':') != std::string::npos) {
+        m_serial = new UDPDataController();
+    } else {
+        m_serial = new SerialDataController();
+    }
+
+    bool res = m_serial->open(device, halfSpeed ? SERIAL_230400 : SERIAL_460800);
 
     if (!res) {
         return false;
     }
 
-    m_serial.write(DV3000_REQ_PRODID, DV3000_REQ_PRODID_LEN);
+    m_serial->write(DV3000_REQ_PRODID, DV3000_REQ_PRODID_LEN);
 
     unsigned char buffer[BUFFER_LENGTH];
     RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
@@ -58,7 +71,7 @@ bool DVController::open(const std::string& device, bool halfSpeed)
     if (type == RESP_ERROR)
     {
         fprintf(stderr, "DVController::open: serial device error\n");
-        m_serial.close();
+        m_serial->closeIt();
         return false;
     }
     else if (type == RESP_NAME)
@@ -71,14 +84,14 @@ bool DVController::open(const std::string& device, bool halfSpeed)
     else
     {
         fprintf(stderr, "DVController::open: response mismatch\n");
-        m_serial.close();
+        m_serial->closeIt();
         return false;
     }
 }
 
 void DVController::close()
 {
-    m_serial.close();
+    m_serial->closeIt();
     m_open = false;
 }
 
@@ -100,7 +113,7 @@ bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRa
 	    m_currentGainIn = gain;
 	}
 
-	encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE);
+	encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE_INTERNAL);
 	return encodeOut(mbeFrame, m_currentNbMbeBytes);
 }
 
@@ -124,7 +137,7 @@ bool DVController::decode(short *audioFrame, const unsigned char *mbeFrame, DVRa
     }
 
 	decodeIn(mbeFrame, m_currentNbMbeBits, m_currentNbMbeBytes);
-	return decodeOut(audioFrame, MBE_AUDIO_BLOCK_SIZE);
+	return decodeOut(audioFrame, MBE_AUDIO_BLOCK_SIZE_INTERNAL);
 }
 
 unsigned short DVController::getNbMbeBytes(DVRate mbeRate)
@@ -203,7 +216,7 @@ bool DVController::setGain(char dBGainIn, char dBGainOut)
     buffer[DV3000_REQ_GAIN_LEN]   = dBGainIn;
     buffer[DV3000_REQ_GAIN_LEN+1] = dBGainOut;
 
-    m_serial.write(buffer, DV3000_REQ_GAIN_LEN + 2);
+    m_serial->write(buffer, DV3000_REQ_GAIN_LEN + 2);
     RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
 
     if (type == RESP_ERROR)
@@ -227,22 +240,22 @@ void DVController::encodeIn(const short* audio, unsigned int length)
 {
     (void) length;
     assert(audio != 0);
-    assert(length == MBE_AUDIO_BLOCK_SIZE);
+    assert(length == MBE_AUDIO_BLOCK_SIZE_INTERNAL);
 
     // TODO: optimization with fixed initialization of the audio header
-    unsigned char buffer[DV3000_AUDIO_HEADER_LEN + MBE_AUDIO_BLOCK_BYTES];
+    unsigned char buffer[DV3000_AUDIO_HEADER_LEN + MBE_AUDIO_BLOCK_BYTES_INTERNAL];
 
     ::memcpy(buffer, DV3000_AUDIO_HEADER, DV3000_AUDIO_HEADER_LEN);
 
     uint8_t* q = (uint8_t*) (buffer + DV3000_AUDIO_HEADER_LEN);
 
-    for (unsigned int i = 0; i < MBE_AUDIO_BLOCK_SIZE; i++, q += 2U)
+    for (unsigned int i = 0; i < MBE_AUDIO_BLOCK_SIZE_INTERNAL; i++, q += 2U)
     {
         q[0U] = (audio[i] & 0xFF00) >> 8;
         q[1U] = (audio[i] & 0x00FF) >> 0;
     }
 
-    m_serial.write(buffer, DV3000_AUDIO_HEADER_LEN + MBE_AUDIO_BLOCK_BYTES);
+    m_serial->write(buffer, DV3000_AUDIO_HEADER_LEN + MBE_AUDIO_BLOCK_BYTES_INTERNAL);
 }
 
 bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
@@ -271,7 +284,7 @@ void DVController::decodeIn(const unsigned char* ambe, unsigned char nbBits, uns
     unsigned short length = nbBytes + 2;
     unsigned char *lengthPtr = (unsigned char *) &length;
 
-    unsigned char buffer[DV3000_AMBE_HEADER_LEN + MBE_FRAME_MAX_LENGTH_BYTES];
+    unsigned char buffer[DV3000_AMBE_HEADER_LEN + MBE_FRAME_MAX_LENGTH_BYTES_INTERNAL];
     ::memcpy(buffer, DV3000_AMBE_HEADER, DV3000_AMBE_HEADER_LEN);
     ::memcpy(buffer + DV3000_AMBE_HEADER_LEN, ambe, nbBytes);
 
@@ -288,14 +301,14 @@ void DVController::decodeIn(const unsigned char* ambe, unsigned char nbBits, uns
 
     ::memcpy(&buffer[5], &nbBits, 1); // set CHAND number of bits
 
-    m_serial.write(buffer, DV3000_AMBE_HEADER_LEN + nbBytes);
+    m_serial->write(buffer, DV3000_AMBE_HEADER_LEN + nbBytes);
 }
 
 bool DVController::decodeOut(short* audio, unsigned int length)
 {
     (void) length;
     assert(audio != 0);
-    assert(length == MBE_AUDIO_BLOCK_SIZE);
+    assert(length == MBE_AUDIO_BLOCK_SIZE_INTERNAL);
 
     unsigned char buffer[BUFFER_LENGTH];
     RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
@@ -308,7 +321,7 @@ bool DVController::decodeOut(short* audio, unsigned int length)
 
     uint8_t* q = (uint8_t*) (buffer + DV3000_AUDIO_HEADER_LEN);
 
-    for (unsigned int i = 0U; i < MBE_AUDIO_BLOCK_SIZE; i++, q += 2U)
+    for (unsigned int i = 0U; i < MBE_AUDIO_BLOCK_SIZE_INTERNAL; i++, q += 2U)
     {
         short word = (q[0] << 8) | (q[1U] << 0);
         audio[i] = word;
@@ -362,7 +375,7 @@ bool DVController::setRate(DVRate rate)
         return true;
     }
 
-    m_serial.write(ratepStr, DV3000_REQ_RATEP_LEN);
+    m_serial->write(ratepStr, DV3000_REQ_RATEP_LEN);
 
     unsigned char buffer[BUFFER_LENGTH];
     RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
@@ -391,13 +404,19 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
     assert(buffer != 0);
     assert(length >= BUFFER_LENGTH);
 
+    if (!m_serial->initResponse())
+    {
+        fprintf(stderr, "DVController::getResponse: cannot get response\n");
+        return RESP_ERROR;
+    }
+
     bool found = false;
     int packetLength, offset;
     unsigned char packetType;
 
     for (int i = 0; i < 2000; i++)
     {
-        int len1 = m_serial.read(buffer, 1U);
+        int len1 = m_serial->read(buffer, 1U);
 
         if (len1 < 0)
         {
@@ -425,7 +444,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
 
     for (int i = 0; i < 2000; i++)
     {
-        int len1 = m_serial.read(&buffer[1 + offset], packetLength - offset);
+        int len1 = m_serial->read(&buffer[1 + offset], packetLength - offset);
 
         if (len1 < 0)
         {
@@ -458,7 +477,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
 
     for (int i = 0; i < 2000; i++)
     {
-        int len1 = m_serial.read(&buffer[4 + offset], packetLength - offset);
+        int len1 = m_serial->read(&buffer[4 + offset], packetLength - offset);
 
         if (len1 < 0)
         {

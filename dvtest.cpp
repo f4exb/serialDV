@@ -46,6 +46,7 @@ void usage()
     fprintf(stderr, "  -o <device>   Audio output device or file with 8 kS/s S16LE audio samples (default is /dev/audio, - for stdout)\n");
     fprintf(stderr, "  -D <device>   Use DVSI AMBE3000 based device for AMBE decoding (e.g. ThumbDV)\n");
     fprintf(stderr, "                Device name is the corresponding TTY USB device e.g /dev/ttyUSB0\n");
+    fprintf(stderr, "                Or AMBE server IP and port e.g 172.18.0.2:2345\n");
     fprintf(stderr, "Decoder options:\n");
     fprintf(stderr, "  -f <num>      Format index\n");
     fprintf(stderr, "     0:         None (does nothing - default)\n");
@@ -174,11 +175,11 @@ int main(int argc, char **argv)
     {
         if (dvController.open(dvSerialDevice))
         {
-            fprintf(stderr, "Opened DV serial device %s\n", dvSerialDevice.c_str());
+            fprintf(stderr, "Opened DV serial device at %s\n", dvSerialDevice.c_str());
         }
         else
         {
-            fprintf(stderr, "Failed to open DV serial device %s. Aborting\n", dvSerialDevice.c_str());
+            fprintf(stderr, "Failed to open DV serial device at %s. Aborting\n", dvSerialDevice.c_str());
             return 0;
         }
     }

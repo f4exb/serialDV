@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2016 Edouard Griffiths, F4EXB.                                  //
+// Copyright (C) 2019 Edouard Griffiths, F4EXB.                                  //
 //                                                                               //
 // This program is free software; you can redistribute it and/or modify          //
 // it under the terms of the GNU General Public License as published by          //
@@ -14,30 +14,23 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.          //
 ///////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SERIALDATACONTROLLER_H_
-#define SERIALDATACONTROLLER_H_
+#ifndef UDPDATACONTROLLER_H_
+#define UDPDATACONTROLLER_H_
 
-#if defined(__WINDOWS__)
-#include <windows.h>
-#endif
-
+#include <string>
 #include "datacontroller.h"
+
+struct sockaddr_in;
 
 namespace SerialDV
 {
 
-#ifdef __WINDOWS__
-const unsigned int BUFFER_LENGTH = 1000U;
-#else
-const unsigned int BUFFER_LENGTH = 400U;
-#endif
-
-class SERIALDV_API SerialDataController : public DataController {
+class SERIALDV_API UDPDataController : public DataController {
 public:
-    SerialDataController();
-    virtual ~SerialDataController();
+    UDPDataController();
+    virtual ~UDPDataController();
 
-    virtual bool open(const std::string& device, SERIAL_SPEED speed);
+    virtual bool open(const std::string& ipAndPort, SERIAL_SPEED speed);
 
     virtual bool initResponse();
     virtual int  read(unsigned char* buffer, unsigned int lengthInBytes);
@@ -46,24 +39,20 @@ public:
     virtual void closeIt();
 
 private:
-    std::string    m_device;
-    SERIAL_SPEED   m_speed;
-#if defined(__WINDOWS__)
-    HANDLE         m_handle;
-    OVERLAPPED     m_readOverlapped;
-    OVERLAPPED     m_writeOverlapped;
-    unsigned char* m_readBuffer;
-    unsigned int   m_readLength;
-    bool           m_readPending;
-#else
-    int            m_fd;
-#endif
+    void openSocket(int port);
+    void closeSocket();
+    void setSendAddress(std::string& address, int port);
 
-#if defined(__WINDOWS__)
-    int readNonblock(unsigned char* buffer, unsigned int length);
-#endif
+    std::string m_ipAddress;
+    int m_port;
+    int m_sockFd;
+    struct sockaddr_in *m_sa;
+    struct sockaddr_in *m_ra;
+    unsigned char m_responseBuffer[2000];
+    int m_responseSize;
+    int m_responseIndex;
 };
 
 } // namespace SerialDV
 
-#endif /* SERIALDATACONTROLLER_H_ */
+#endif // UDPDATACONTROLLER_H_

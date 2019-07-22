@@ -20,10 +20,51 @@
 #include <string>
 
 #include "serialdv_export.h"
-#include "serialdatacontroller.h"
 
 namespace SerialDV
 {
+
+class DataController;
+
+const unsigned int MBE_AUDIO_BLOCK_SIZE  = 160U;
+const unsigned int MBE_AUDIO_BLOCK_BYTES = MBE_AUDIO_BLOCK_SIZE * 2U;
+const unsigned int MBE_FRAME_MAX_LENGTH_BYTES = 18U;
+
+const unsigned char DV3000_START_BYTE   = 0x61U;
+
+const unsigned char DV3000_TYPE_CONTROL = 0x00U;
+const unsigned char DV3000_TYPE_AMBE    = 0x01U;
+const unsigned char DV3000_TYPE_AUDIO   = 0x02U;
+
+const unsigned char DV3000_CONTROL_RATEP  = 0x0AU;
+const unsigned char DV3000_CONTROL_GAIN   = 0x4BU;
+const unsigned char DV3000_CONTROL_PRODID = 0x30U;
+const unsigned char DV3000_CONTROL_READY  = 0x39U;
+
+const unsigned char DV3000_REQ_PRODID[] = {DV3000_START_BYTE, 0x00U, 0x01U, DV3000_TYPE_CONTROL, DV3000_CONTROL_PRODID};
+const unsigned int DV3000_REQ_PRODID_LEN = 5U;
+
+const unsigned char DV3000_REQ_3600X2400_RATEP[]   = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x01U, 0x30U, 0x07U, 0x63U, 0x40U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x48U};
+const unsigned char DV3000_REQ_3600X2450_RATEP[]   = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x04U, 0x31U, 0x07U, 0x54U, 0x24U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x6FU, 0x48U};
+
+const unsigned char DV3000_REQ_7200X4400_1_RATEP[] = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x00U, 0x58U, 0x08U, 0x87U, 0x30U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x44U, 0x90U};
+const unsigned char DV3000_REQ_7200X4400_2_RATEP[] = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x02U, 0x58U, 0x07U, 0x65U, 0x00U, 0x09U, 0x1EU, 0x0CU, 0x41U, 0x27U, 0x73U, 0x90U};
+const unsigned char DV3000_REQ_7200X4400_3_RATEP[] = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x04U, 0x58U, 0x09U, 0x86U, 0x80U, 0x20U, 0x00U, 0x00U, 0x00U, 0x00U, 0x73U, 0x90U};
+
+const unsigned char DV3000_REQ_2450_RATEP[]        = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x04U, 0x31U, 0x07U, 0x54U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x70U, 0x31U};
+const unsigned char DV3000_REQ_4400_RATEP[]        = {DV3000_START_BYTE, 0x00U, 0x0DU, DV3000_TYPE_CONTROL, DV3000_CONTROL_RATEP, 0x04U, 0x58U, 0x09U, 0x86U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x00U, 0x44U, 0x58U};
+const unsigned int DV3000_REQ_RATEP_LEN = 17U;
+
+const unsigned char DV3000_REQ_GAIN[] = {DV3000_START_BYTE, 0x00U, 0x03U, DV3000_TYPE_CONTROL, DV3000_CONTROL_GAIN}; // followed by 1 byte input gain and 1 byte output gain
+const unsigned int DV3000_REQ_GAIN_LEN = 5U;
+
+const unsigned char DV3000_AUDIO_HEADER[] = {DV3000_START_BYTE, 0x01U, 0x42U, DV3000_TYPE_AUDIO, 0x00U, 0xA0U};
+const unsigned char DV3000_AUDIO_HEADER_LEN = 6U;
+
+const unsigned char DV3000_AMBE_HEADER[] = {DV3000_START_BYTE, 0x00U, 0x0BU, DV3000_TYPE_AMBE, 0x01U, 0x48U};
+const unsigned char DV3000_AMBE_HEADER_LEN  = 6U;
+
+const unsigned int DV3000_HEADER_LEN = 4U;
 
 typedef enum
 {
@@ -88,7 +129,7 @@ private:
         RESP_UNKNOWN
     };
 
-    SerialDataController m_serial;
+    DataController *m_serial;
     bool m_open; //!< True if the serial DV device has been correctly opened
     DVRate m_currentRate;
     int m_currentGainIn;
