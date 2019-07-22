@@ -211,13 +211,15 @@ int UDPDataController::timeout_recvfrom(int sock, char *buf, int length, struct 
     t.tv_sec = timeoutinmicroseconds / 1000000;
     t.tv_usec = timeoutinmicroseconds % 1000000;
 
-    if (select(sock + 1, &socks, nullptr, nullptr, &t))
+    int nready = select(sock + 1, &socks, nullptr, nullptr, &t);
+
+    if (nready > 0)
     {
         socklen_t addrLen = sizeof(struct sockaddr_in);
-        int nbytes = recvfrom(sock, buf, length, 0, (struct sockaddr *)connection, &addrLen);
+        int nbytes = recvfrom(sock, buf, length, 0, (struct sockaddr *) connection, &addrLen);
         return nbytes;
     }
-    else
+    else // error or no data after timeout
     {
         return 0;
     }
