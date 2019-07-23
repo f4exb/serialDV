@@ -21,8 +21,6 @@
 #include "datacontroller.h"
 
 struct sockaddr_in;
-struct fd_set;
-typedef fd_set fd_set;
 
 namespace SerialDV
 {
