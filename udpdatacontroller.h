@@ -21,6 +21,8 @@
 #include "datacontroller.h"
 
 struct sockaddr_in;
+struct fd_set;
+typedef fd_set fd_set;
 
 namespace SerialDV
 {
@@ -47,7 +49,6 @@ private:
     std::string m_ipAddress;
     int m_port;
     int m_sockFd;
-    fd_set m_fds;
     struct sockaddr_in *m_sa;
     struct sockaddr_in *m_ra;
     unsigned char m_responseBuffer[2000];

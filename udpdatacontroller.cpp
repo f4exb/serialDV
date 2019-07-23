@@ -202,13 +202,14 @@ void UDPDataController::setSendAddress(std::string& address, int port)
 
 int UDPDataController::timeout_recvfrom(char *buf, int length, struct sockaddr_in *connection, int timeoutinmicroseconds)
 {
+    fd_set fds;
     struct timeval tv;
     tv.tv_sec  = timeoutinmicroseconds / 1000000;
     tv.tv_usec = timeoutinmicroseconds % 1000000;
-    FD_ZERO(&m_fds);
-    FD_SET(m_sockFd, &m_fds);
+    FD_ZERO(&fds);
+    FD_SET(m_sockFd, &fds);
 
-    if (select(m_sockFd + 1, &m_fds, nullptr, nullptr, &tv) < 0)
+    if (select(m_sockFd + 1, &fds, nullptr, nullptr, &tv) < 0)
     {
 #ifdef __WINDOWS__
         std::cerr << "UDPDataController::timeout_recvfrom: error from select: " << WSAGetLastError() << std::endl;
@@ -218,7 +219,7 @@ int UDPDataController::timeout_recvfrom(char *buf, int length, struct sockaddr_i
         return 0;
     }
 
-    if (FD_ISSET(m_sockFd, &m_fds))
+    if (FD_ISSET(m_sockFd, &fds))
     {
         socklen_t addrLen = sizeof(struct sockaddr_in);
         return recvfrom(m_sockFd, buf, length, 0, (struct sockaddr *) connection, &addrLen);
