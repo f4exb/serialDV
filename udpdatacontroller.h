@@ -42,11 +42,12 @@ private:
     void openSocket(int port);
     void closeSocket();
     void setSendAddress(std::string& address, int port);
-    int timeout_recvfrom(int sock, char *buf, int length, struct sockaddr_in *connection, int timeoutinmicroseconds);
+    int timeout_recvfrom(char *buf, int length, struct sockaddr_in *connection, int timeoutinmicroseconds);
 
     std::string m_ipAddress;
     int m_port;
     int m_sockFd;
+    fd_set m_fds;
     struct sockaddr_in *m_sa;
     struct sockaddr_in *m_ra;
     unsigned char m_responseBuffer[2000];

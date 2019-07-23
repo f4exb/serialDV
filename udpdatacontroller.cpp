@@ -96,9 +96,8 @@ bool UDPDataController::open(const std::string& ipAndPort, SERIAL_SPEED speed)
 
 bool UDPDataController::initResponse()
 {
-    m_responseSize = timeout_recvfrom(m_sockFd, (char *) m_responseBuffer, 2000, m_ra, 50000);
+    m_responseSize = timeout_recvfrom((char *) m_responseBuffer, 2000, m_ra, 100000);
     m_responseIndex = 0;
-    //std::cerr << "UDPDataController::initResponse: read: " << m_responseSize << std::endl;
     return m_responseSize > 0;
 }
 
@@ -134,7 +133,6 @@ int UDPDataController::write(const unsigned char* buffer, unsigned int lengthInB
 #else
     int nbytes = sendto(m_sockFd, buffer, lengthInBytes, 0, (const sockaddr *) m_sa, sizeof(struct sockaddr_in));
 #endif
-    //std::cerr << "UDPDataController::write: length: " << lengthInBytes << " written: " << nbytes << std::endl;
     return nbytes;
 }
 
@@ -202,25 +200,32 @@ void UDPDataController::setSendAddress(std::string& address, int port)
     m_sa->sin_addr.s_addr = inet_addr(address.c_str());
 }
 
-int UDPDataController::timeout_recvfrom(int sock, char *buf, int length, struct sockaddr_in *connection, int timeoutinmicroseconds)
+int UDPDataController::timeout_recvfrom(char *buf, int length, struct sockaddr_in *connection, int timeoutinmicroseconds)
 {
-    fd_set socks;
-    struct timeval t;
-    FD_ZERO(&socks);
-    FD_SET(sock, &socks);
-    t.tv_sec = timeoutinmicroseconds / 1000000;
-    t.tv_usec = timeoutinmicroseconds % 1000000;
+    struct timeval tv;
+    tv.tv_sec  = timeoutinmicroseconds / 1000000;
+    tv.tv_usec = timeoutinmicroseconds % 1000000;
+    FD_ZERO(&m_fds);
+    FD_SET(m_sockFd, &m_fds);
 
-    int nready = select(sock + 1, &socks, nullptr, nullptr, &t);
+    if (select(m_sockFd + 1, &m_fds, nullptr, nullptr, &tv) < 0)
+    {
+#ifdef __WINDOWS__
+        std::cerr << "UDPDataController::timeout_recvfrom: error from select: " << WSAGetLastError() << std::endl;
+#else
+        std::cerr << "UDPDataController::timeout_recvfrom: error from select: " << strerror(errno) << std::endl;
+#endif
+        return 0;
+    }
 
-    if (nready > 0)
+    if (FD_ISSET(m_sockFd, &m_fds))
     {
         socklen_t addrLen = sizeof(struct sockaddr_in);
-        int nbytes = recvfrom(sock, buf, length, 0, (struct sockaddr *) connection, &addrLen);
-        return nbytes;
+        return recvfrom(m_sockFd, buf, length, 0, (struct sockaddr *) connection, &addrLen);
     }
-    else // error or no data after timeout
+    else
     {
+        std::cerr << "UDPDataController::timeout_recvfrom: no data" << std::endl;
         return 0;
     }
 }
