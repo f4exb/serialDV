@@ -96,7 +96,7 @@ bool UDPDataController::open(const std::string& ipAndPort, SERIAL_SPEED speed)
 
 bool UDPDataController::initResponse()
 {
-    m_responseSize = timeout_recvfrom((char *) m_responseBuffer, 2000, m_ra, 100000);
+    m_responseSize = timeout_recvfrom((char *) m_responseBuffer, 2000, m_ra, 20000);
     m_responseIndex = 0;
     return m_responseSize > 0;
 }
