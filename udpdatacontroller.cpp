@@ -23,11 +23,13 @@
 #include <WS2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")
 #else
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 #endif
 
 #include "udpdatacontroller.h"
