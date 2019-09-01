@@ -192,7 +192,7 @@ unsigned char DVController::getNbMbeBits(DVRate mbeRate)
     }
 }
 
-bool DVController::setGain(char dBGainIn, char dBGainOut)
+bool DVController::setGain(signed char dBGainIn, signed char dBGainOut)
 {
     if (!m_open) {
         return false;

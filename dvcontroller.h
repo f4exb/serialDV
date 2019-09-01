@@ -159,7 +159,7 @@ private:
      * If the output gain is < 0 dB then the output speech samples are attenuated after decoding.
      * If the output gain is > 0 dB then the output speech samples are amplified after decoding.
      */
-    bool setGain(char dBGainIn, char dBGainOut);
+    bool setGain(signed char dBGainIn, signed char dBGainOut);
 
     RESP_TYPE getResponse(unsigned char* buffer, unsigned int length);
 };
