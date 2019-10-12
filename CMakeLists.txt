@@ -43,18 +43,29 @@ endif()
 
 set(serialdv_SOURCES
   datacontroller.cpp
-  serialdatacontroller.cpp
-  udpdatacontroller.cpp
+  dummydatacontroller.cpp
   dvcontroller.cpp
 )
 
 set(serialdv_HEADERS
   serialdv_export.h
   datacontroller.h
-  serialdatacontroller.h
-  udpdatacontroller.h
+  dummydatacontroller.h
   dvcontroller.h
 )
+
+if (NOT APPLE)
+    set(serialdv_SOURCES
+        ${serialdv_SOURCES}
+        serialdatacontroller.cpp
+        udpdatacontroller.cpp
+    )
+    set(serialdv_HEADERS
+        ${serialdv_SOURCES}
+        serialdatacontroller.h
+        udpdatacontroller.h
+    )
+endif()
 
 include_directories(
     ${PROJECT_SOURCE_DIR}

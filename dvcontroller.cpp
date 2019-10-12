@@ -21,8 +21,12 @@
 #include <cstring>
 #include <stdint.h>
 
+#ifdef __APPLE__
+#include "dummydatacontroller.h"
+#else
 #include "udpdatacontroller.h"
 #include "serialdatacontroller.h"
+#endif
 #include "dvcontroller.h"
 
 namespace SerialDV
@@ -51,11 +55,15 @@ bool DVController::open(const std::string& device, bool halfSpeed)
 {
     m_open = false;
 
+#if __APPLE__
+    m_serial = new DummyDataController();
+#else
     if (device.find(':') != std::string::npos) {
         m_serial = new UDPDataController();
     } else {
         m_serial = new SerialDataController();
     }
+#endif
 
     bool res = m_serial->open(device, halfSpeed ? SERIAL_230400 : SERIAL_460800);
 
