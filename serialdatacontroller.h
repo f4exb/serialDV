@@ -25,13 +25,6 @@
 
 namespace SerialDV
 {
-
-#ifdef __WINDOWS__
-const unsigned int BUFFER_LENGTH = 1000U;
-#else
-const unsigned int BUFFER_LENGTH = 400U;
-#endif
-
 class SERIALDV_API SerialDataController : public DataController {
 public:
     SerialDataController();

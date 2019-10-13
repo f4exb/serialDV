@@ -53,6 +53,8 @@ public:
     virtual int  write(const unsigned char* buffer, unsigned int lengthInBytes) = 0;
 
     virtual void closeIt() = 0;
+
+    static const unsigned int BUFFER_LENGTH;
 };
 
 } // namespace SerialDV

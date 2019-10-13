@@ -55,7 +55,7 @@ bool DVController::open(const std::string& device, bool halfSpeed)
 {
     m_open = false;
 
-#if __APPLE__
+#ifdef __APPLE__
     m_serial = new DummyDataController();
 #else
     if (device.find(':') != std::string::npos) {
@@ -73,8 +73,8 @@ bool DVController::open(const std::string& device, bool halfSpeed)
 
     m_serial->write(DV3000_REQ_PRODID, DV3000_REQ_PRODID_LEN);
 
-    unsigned char buffer[BUFFER_LENGTH];
-    RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
+    unsigned char buffer[DataController::BUFFER_LENGTH];
+    RESP_TYPE type = getResponse(buffer, DataController::BUFFER_LENGTH);
 
     if (type == RESP_ERROR)
     {
@@ -225,7 +225,7 @@ bool DVController::setGain(signed char dBGainIn, signed char dBGainOut)
     buffer[DV3000_REQ_GAIN_LEN+1] = dBGainOut;
 
     m_serial->write(buffer, DV3000_REQ_GAIN_LEN + 2);
-    RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
+    RESP_TYPE type = getResponse(buffer, DataController::BUFFER_LENGTH);
 
     if (type == RESP_ERROR)
     {
@@ -271,8 +271,8 @@ bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
     assert(ambe != 0);
     assert(length == m_currentNbMbeBytes);
 
-    unsigned char buffer[BUFFER_LENGTH];
-    RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
+    unsigned char buffer[DataController::BUFFER_LENGTH];
+    RESP_TYPE type = getResponse(buffer, DataController::BUFFER_LENGTH);
 
     if (type != RESP_AMBE)
     {
@@ -318,8 +318,8 @@ bool DVController::decodeOut(short* audio, unsigned int length)
     assert(audio != 0);
     assert(length == MBE_AUDIO_BLOCK_SIZE_INTERNAL);
 
-    unsigned char buffer[BUFFER_LENGTH];
-    RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
+    unsigned char buffer[DataController::BUFFER_LENGTH];
+    RESP_TYPE type = getResponse(buffer, DataController::BUFFER_LENGTH);
 
     if (type != RESP_AUDIO)
     {
@@ -385,8 +385,8 @@ bool DVController::setRate(DVRate rate)
 
     m_serial->write(ratepStr, DV3000_REQ_RATEP_LEN);
 
-    unsigned char buffer[BUFFER_LENGTH];
-    RESP_TYPE type = getResponse(buffer, BUFFER_LENGTH);
+    unsigned char buffer[DataController::BUFFER_LENGTH];
+    RESP_TYPE type = getResponse(buffer, DataController::BUFFER_LENGTH);
 
     if (type == RESP_ERROR)
     {
@@ -410,7 +410,7 @@ DVController::RESP_TYPE DVController::getResponse(unsigned char* buffer, unsigne
 {
     (void) length;
     assert(buffer != 0);
-    assert(length >= BUFFER_LENGTH);
+    assert(length >= DataController::BUFFER_LENGTH);
 
     if (!m_serial->initResponse())
     {
