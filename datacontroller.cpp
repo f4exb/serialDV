@@ -19,12 +19,6 @@
 namespace SerialDV
 {
 
-#ifdef __WINDOWS__
-const unsigned int DataController::BUFFER_LENGTH = 1000U;
-#else
-const unsigned int DataController::BUFFER_LENGTH = 400U;
-#endif
-
 DataController::DataController()
 {}
 

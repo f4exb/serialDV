@@ -54,7 +54,11 @@ public:
 
     virtual void closeIt() = 0;
 
-    static const unsigned int BUFFER_LENGTH;
+#ifdef __WINDOWS__
+    static const unsigned int BUFFER_LENGTH = 1000U;
+#else
+    static const unsigned int BUFFER_LENGTH = 400U;
+#endif
 };
 
 } // namespace SerialDV
