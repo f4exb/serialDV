@@ -4,7 +4,7 @@ project(serialdv)
 
 set(MAJOR_VERSION 1)
 set(MINOR_VERSION 1)
-set(PATCH_VERSION 2)
+set(PATCH_VERSION 4)
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION})
 set(VERSION ${VERSION_STRING})
 
@@ -61,7 +61,7 @@ if (NOT APPLE)
         udpdatacontroller.cpp
     )
     set(serialdv_HEADERS
-        ${serialdv_SOURCES}
+        ${serialdv_HEADERS}
         serialdatacontroller.h
         udpdatacontroller.h
     )
