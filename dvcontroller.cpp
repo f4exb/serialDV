@@ -169,6 +169,18 @@ unsigned short DVController::getNbMbeBytes(DVRate mbeRate)
     case DVRate4400:
         return 11;
         break;
+    case DVRate2200:
+        return 6;
+        break;
+    case DVRate3000:
+        return 8;
+        break;
+    case DVRate6400:
+        return 16;
+        break;
+    case DVRate9600:
+        return 24;
+        break;
     default:
         return 0;
     }
@@ -194,6 +206,18 @@ unsigned char DVController::getNbMbeBits(DVRate mbeRate)
         break;
     case DVRate4400:
         return 88;
+        break;
+    case DVRate2200:
+        return 44;
+        break;
+    case DVRate3000:
+        return 60;
+        break;
+    case DVRate6400:
+        return 128;
+        break;
+    case DVRate9600:
+        return 192;
         break;
     default:
         return 0;
@@ -378,6 +402,26 @@ bool DVController::setRate(DVRate rate)
         ratepStr = DV3000_REQ_4400_RATEP;
         m_currentNbMbeBits = 88;
         m_currentNbMbeBytes = 11;
+        break;
+    case DVRate2200:
+        ratepStr = DV3000_REQ_2200_RATEP;
+        m_currentNbMbeBits = 44;
+        m_currentNbMbeBytes = 6;
+        break;
+    case DVRate3000:
+        ratepStr = DV3000_REQ_3000_RATEP;
+        m_currentNbMbeBits = 60;
+        m_currentNbMbeBytes = 8;
+        break;
+    case DVRate6400:
+        ratepStr = DV3000_REQ_6400_RATEP;
+        m_currentNbMbeBits = 128;
+        m_currentNbMbeBytes = 16;
+        break;
+    case DVRate9600:
+        ratepStr = DV3000_REQ_9600_RATEP;
+        m_currentNbMbeBits = 192;
+        m_currentNbMbeBytes = 24;
         break;
     default:
         return true;
