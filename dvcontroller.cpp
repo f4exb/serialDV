@@ -281,7 +281,6 @@ bool DVController::setGain(signed char dBGainIn, signed char dBGainOut)
 
 void DVController::encodeIn(const short* audio, unsigned int length)
 {   
-    fprintf(stderr, "DVController::encodeIn begin\n");
     (void) length;
     assert(audio != 0);
     assert(length == MBE_AUDIO_BLOCK_SIZE_INTERNAL);
@@ -300,7 +299,6 @@ void DVController::encodeIn(const short* audio, unsigned int length)
     }
 
     m_serial->write(buffer, DV3000_AUDIO_HEADER_LEN + MBE_AUDIO_BLOCK_BYTES_INTERNAL);
-    fprintf(stderr, "DVController::encodeIn end\n");
 }
 
 bool DVController::encodeOut(unsigned char* ambe, unsigned int length)
