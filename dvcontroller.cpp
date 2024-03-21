@@ -105,7 +105,6 @@ void DVController::close()
 
 bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRate rate, int gain)
 {
-    fprintf(stderr, "DVController::encode begin \n");
 	if (!m_open) {
 		return false;
 	}
@@ -121,9 +120,7 @@ bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRa
 	    setGain(gain, m_currentGainOut);
 	    m_currentGainIn = gain;
 	}
-    fprintf(stderr, "DVController::encode begin \n");
 	encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE_INTERNAL);
-    fprintf(stderr, "DVController::encode end \n");
 	return encodeOut(mbeFrame, m_currentNbMbeBytes);
 }
 
