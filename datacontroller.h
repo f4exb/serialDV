@@ -23,9 +23,9 @@
 namespace SerialDV
 {
 
-const unsigned int MBE_AUDIO_BLOCK_SIZE_INTERNAL  = 160U;
+const unsigned int MBE_AUDIO_BLOCK_SIZE_INTERNAL  = 192U;
 const unsigned int MBE_AUDIO_BLOCK_BYTES_INTERNAL = MBE_AUDIO_BLOCK_SIZE_INTERNAL * 2U;
-const unsigned int MBE_FRAME_MAX_LENGTH_BYTES_INTERNAL = 18U;
+const unsigned int MBE_FRAME_MAX_LENGTH_BYTES_INTERNAL = 24U;
 
 enum SERIAL_SPEED {
 	SERIAL_NONE   = 0,
