@@ -1,4 +1,7 @@
 .cproject
 .project
 .vscode
-build
+build/
+include/
+lib/
+bin/
