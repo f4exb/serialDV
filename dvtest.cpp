@@ -57,6 +57,12 @@ void usage()
     fprintf(stderr, "     5:         2400 no FEC\n");
     fprintf(stderr, "     6:         2450 no FEC\n");
     fprintf(stderr, "     7:         4400 no FEC\n");
+    fprintf(stderr, "     8:         2200 no FEC\n");
+    fprintf(stderr, "     9:         3000 no FEC\n");
+    fprintf(stderr, "     10:        6400 no FEC\n");
+    fprintf(stderr, "     11:        7200 no FEC\n");
+    fprintf(stderr, "     12:        8000 no FEC\n");
+    fprintf(stderr, "     13:        9600 no FEC\n");
     fprintf(stderr, "  -g <num>      linear gain applied to output (decoder - default 1.0)\n");
     fprintf(stderr, "\n");
 }
@@ -111,7 +117,7 @@ int main(int argc, char **argv)
         case 'f':
             int formatNum;
             sscanf(optarg, "%d", &formatNum);
-            if ((formatNum >= 0) && (formatNum <= 7))
+            if ((formatNum >= 0) && (formatNum <= 13))
             {
                 dvRate = (SerialDV::DVRate) formatNum;
             }

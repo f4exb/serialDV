@@ -120,7 +120,6 @@ bool DVController::encode(const short *audioFrame, unsigned char *mbeFrame, DVRa
 	    setGain(gain, m_currentGainOut);
 	    m_currentGainIn = gain;
 	}
-
 	encodeIn(audioFrame, MBE_AUDIO_BLOCK_SIZE_INTERNAL);
 	return encodeOut(mbeFrame, m_currentNbMbeBytes);
 }
@@ -169,6 +168,24 @@ unsigned short DVController::getNbMbeBytes(DVRate mbeRate)
     case DVRate4400:
         return 11;
         break;
+    case DVRate2200:
+        return 6;
+        break;
+    case DVRate3000:
+        return 8;
+        break;
+    case DVRate6400:
+        return 16;
+        break;
+    case DVRate7200:
+        return 18;
+        break;
+    case DVRate8000:
+        return 20;
+        break;
+    case DVRate9600:
+        return 24;
+        break;
     default:
         return 0;
     }
@@ -194,6 +211,24 @@ unsigned char DVController::getNbMbeBits(DVRate mbeRate)
         break;
     case DVRate4400:
         return 88;
+        break;
+    case DVRate2200:
+        return 44;
+        break;
+    case DVRate3000:
+        return 60;
+        break;
+    case DVRate6400:
+        return 128;
+        break;
+    case DVRate7200:
+        return 144;
+        break;
+    case DVRate8000:
+        return 160;
+        break;
+    case DVRate9600:
+        return 192;
         break;
     default:
         return 0;
@@ -245,7 +280,7 @@ bool DVController::setGain(signed char dBGainIn, signed char dBGainOut)
 }
 
 void DVController::encodeIn(const short* audio, unsigned int length)
-{
+{   
     (void) length;
     assert(audio != 0);
     assert(length == MBE_AUDIO_BLOCK_SIZE_INTERNAL);
@@ -340,6 +375,7 @@ bool DVController::decodeOut(short* audio, unsigned int length)
 
 bool DVController::setRate(DVRate rate)
 {
+    fprintf(stderr, "DVController::setRate begin \n");
     if (!m_open) {
         return false;
     }
@@ -379,6 +415,36 @@ bool DVController::setRate(DVRate rate)
         m_currentNbMbeBits = 88;
         m_currentNbMbeBytes = 11;
         break;
+    case DVRate2200:
+        ratepStr = DV3000_REQ_2200_RATEP;
+        m_currentNbMbeBits = 44;
+        m_currentNbMbeBytes = 6;
+        break;
+    case DVRate3000:
+        ratepStr = DV3000_REQ_3000_RATEP;
+        m_currentNbMbeBits = 60;
+        m_currentNbMbeBytes = 8;
+        break;
+    case DVRate6400:
+        ratepStr = DV3000_REQ_6400_RATEP;
+        m_currentNbMbeBits = 128;
+        m_currentNbMbeBytes = 16;
+        break;
+    case DVRate7200:
+        ratepStr = DV3000_REQ_7200_RATEP;
+        m_currentNbMbeBits = 144;
+        m_currentNbMbeBytes = 18;
+        break;
+    case DVRate8000:
+        ratepStr = DV3000_REQ_8000_RATEP;
+        m_currentNbMbeBits = 160;
+        m_currentNbMbeBytes = 20;
+        break;
+    case DVRate9600:
+        ratepStr = DV3000_REQ_9600_RATEP;
+        m_currentNbMbeBits = 192;
+        m_currentNbMbeBytes = 24;
+        break;
     default:
         return true;
     }
@@ -403,6 +469,7 @@ bool DVController::setRate(DVRate rate)
         fprintf(stderr, "DVController::setRate: response mismatch\n");
         return false;
     }
+    fprintf(stderr, "DVController::setRate begin \n");
 
 }
 
